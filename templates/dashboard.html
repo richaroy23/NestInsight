@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Dataset Analysis Dashboard</h1>
+
+        <!-- Dataset Summary -->
+        <h2>Dataset Summary</h2>
+        <ul>
+            <li><strong>Rows:</strong> {{ summary.rows }}</li>
+            <li><strong>Columns:</strong> {{ summary.columns }}</li>
+            <li><strong>Column Names:</strong> {{ summary.column_names }}</li>
+        </ul>
+
+        <!-- Cleaning Report -->
+        <h2>Cleaning Report</h2>
+        <ul>
+            <li><strong>Missing Values Before Cleaning:</strong> {{ cleaning_report.missing_before }}</li>
+            <li><strong>Duplicates Removed:</strong> {{ cleaning_report.duplicates_removed }}</li>
+        </ul>
+
+        <!-- Model Performance -->
+        <h2>Model Performance</h2>
+
+        {% if model_result.status == "success" %}
+            <p><strong>Accuracy:</strong> {{ model_result.accuracy }}%</p>
+        {% else %}
+            <p><strong>Error:</strong> {{ model_result.message }}</p>
+        {% endif %}
+
+        <!-- Business Insights -->
+        <h2>Business Insights</h2>
+
+        {% for insight in insights %}
+            <p>{{ insight }}</p>
+        {% endfor %}
+
+        <!-- Visualization -->
+        <h2>Correlation Heatmap</h2>
+
+        {% if chart %}
+            <img src="{{ chart }}" alt="Heatmap" width="700">
+        {% else %}
+            <p>No numeric columns available for visualization.</p>
+        {% endif %}
+
+        <!-- Downloads -->
+        <h2>Download Reports</h2>
+
+        <a href="/download/cleaned" download>
+            <button>Download Cleaned CSV</button>
+        </a>
+
+        <a href="/download/pdf" download>
+            <button>Download PDF Report</button>
+        </a>
+
+        <a href="/download/docx" download>
+            <button>Download DOCX Report</button>
+        </a>
+
+    </div>
+
+</body>
+</html>

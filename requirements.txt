@@ -1,0 +1,11 @@
+flask
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+mysql-connector-python
+reportlab
+python-docx
+joblib
+openpyxl

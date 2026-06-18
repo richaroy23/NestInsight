@@ -59,19 +59,53 @@ def statistical_analysis(df):
     return stats
 
 def generate_visuals(df):
-    #Correlation heatmap
-    corr = df.corr(numeric_only=True)
-    if corr.empty:
-        return None
-    
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(df.corr(numeric_only=True), annot=True)
+    chart_paths = {}
 
-    chart_path = "outputs/charts/heatmap.png"
-    plt.savefig(chart_path)
+    numeric_cols = df.select_dtypes(include='number').columns
+
+    if len(numeric_cols) == 0:
+        return chart_paths
+
+    # Histogram
+    plt.figure(figsize=(8, 6))
+    df[numeric_cols[0]].hist()
+    histogram_path = "outputs/charts/histogram.png"
+    plt.savefig(histogram_path)
     plt.close()
+    chart_paths["histogram"] = histogram_path
 
-    return chart_path
+    # Boxplot
+    plt.figure(figsize=(8, 6))
+    sns.boxplot(x=df[numeric_cols[0]])
+    boxplot_path = "outputs/charts/boxplot.png"
+    plt.savefig(boxplot_path)
+    plt.close()
+    chart_paths["boxplot"] = boxplot_path
+
+    # Scatterplot
+    if len(numeric_cols) >= 2:
+        plt.figure(figsize=(8, 6))
+        sns.scatterplot(
+            x=df[numeric_cols[0]],
+            y=df[numeric_cols[1]]
+        )
+        scatter_path = "outputs/charts/scatter.png"
+        plt.savefig(scatter_path)
+        plt.close()
+        chart_paths["scatter"] = scatter_path
+
+    # Heatmap
+    corr = df.corr(numeric_only=True)
+
+    if not corr.empty:
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(corr, annot=True)
+        heatmap_path = "outputs/charts/heatmap.png"
+        plt.savefig(heatmap_path)
+        plt.close()
+        chart_paths["heatmap"] = heatmap_path
+
+    return chart_paths
 
 def train_model(df):
     try:

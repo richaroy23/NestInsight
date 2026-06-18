@@ -28,7 +28,7 @@ def upload():
     #Analysis
     summary = descriptive_analysis(df)
     stats = statistical_analysis(df)
-    chart = generate_visuals(df)
+    chart_paths = generate_visuals(df)
     model_result = train_model(df)
     insights = business_insights(df)
     
@@ -44,7 +44,7 @@ def upload():
     cleaning_report=cleaning_report,
     model_result=model_result,
     insights=insights,
-    chart=chart,
+    chart_paths=chart_paths,
     cleaned_path=cleaned_path,
     pdf_path=pdf_path,
     docx_path=docx_path

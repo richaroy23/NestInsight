@@ -33,8 +33,8 @@ def upload():
     insights = business_insights(df)
     
     #Generate reports
-    pdf_path = generate_pdf(summary, stats, insights, model_result)
-    docx_path = generate_docx(summary, stats, insights, model_result)
+    pdf_path = generate_pdf(summary, stats, insights, model_result, chart_paths)
+    docx_path = generate_docx(summary, stats, insights, model_result, chart_paths)
     
     #Render dashboard 
     return render_template(

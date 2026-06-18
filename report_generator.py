@@ -1,9 +1,9 @@
 import os
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet
 from docx import Document
 
-def generate_pdf(summary, stats, insights, model_result):
+def generate_pdf(summary, stats, insights, model_result, chart_paths):
     os.makedirs("outputs/reports", exist_ok=True)
     
     pdf_path = "outputs/reports/report.pdf"
@@ -43,12 +43,21 @@ def generate_pdf(summary, stats, insights, model_result):
     else:
         elements.append(Paragraph(f"Training Failed: {model_result['message']}", styles['BodyText']))
 
+    elements.append(Spacer(1, 20))
+
+    #Charts
+    elements.append(Paragraph("Visual Analytics:", styles['Heading2']))
+    for chart_name, chart_path in chart_paths.items():
+        elements.append(Paragraph(chart_name.capitalize(), styles['Heading3']))
+        elements.append(Image(chart_path, width=400, height=250))
+        elements.append(Spacer(1, 20))
+
     doc.build(elements)
 
     return pdf_path
 
 # Generate DOCX report
-def generate_docx(summary, stats, insights, model_result):
+def generate_docx(summary, stats, insights, model_result, chart_paths):
     os.makedirs("outputs/reports", exist_ok=True)
     
     docx_path = "outputs/reports/report.docx"
@@ -80,5 +89,10 @@ def generate_docx(summary, stats, insights, model_result):
     else:
         doc.add_paragraph(f"Training Failed: {model_result['message']}")
 
+    #Charts
+    doc.add_heading("Visual Analytics:", level=1)
+    for chart_name, chart_path in chart_paths.items():
+        doc.add_heading(chart_name.capitalize(), level=2)
+        doc.add_picture(chart_path, width=None)
     doc.save(docx_path)
     return docx_path

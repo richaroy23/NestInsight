@@ -3,71 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>NestInsight Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <h1>Dataset Analysis Dashboard</h1>
+    <h1>📊 NestInsight Dashboard</h1>
 
-        <!-- Dataset Summary -->
-        <h2>Dataset Summary</h2>
-        <ul>
-            <li><strong>Rows:</strong> {{ summary.rows }}</li>
-            <li><strong>Columns:</strong> {{ summary.columns }}</li>
-            <li><strong>Column Names:</strong> {{ summary.column_names }}</li>
-        </ul>
+    <!-- KPI Cards -->
+    <div class="cards">
 
-        <!-- Cleaning Report -->
-        <h2>Cleaning Report</h2>
-        <ul>
-            <li><strong>Missing Values Before Cleaning:</strong> {{ cleaning_report.missing_before }}</li>
-            <li><strong>Duplicates Removed:</strong> {{ cleaning_report.duplicates_removed }}</li>
-        </ul>
+        <div class="card">
+            <h3>Total Rows</h3>
+            <p>{{ summary.rows }}</p>
+        </div>
 
-        <!-- Model Performance -->
-        <h2>Model Performance</h2>
+        <div class="card">
+            <h3>Total Columns</h3>
+            <p>{{ summary.columns }}</p>
+        </div>
 
-        {% if model_result.status == "success" %}
-            <p><strong>Accuracy:</strong> {{ model_result.accuracy }}%</p>
-        {% else %}
-            <p><strong>Error:</strong> {{ model_result.message }}</p>
-        {% endif %}
+        <div class="card">
+            <h3>Missing Values</h3>
+            <p>{{ cleaning_report.missing_before }}</p>
+        </div>
 
-        <!-- Business Insights -->
-        <h2>Business Insights</h2>
+        <div class="card">
+            <h3>Duplicates Removed</h3>
+            <p>{{ cleaning_report.duplicates_removed }}</p>
+        </div>
 
-        {% for insight in insights %}
-            <p>{{ insight }}</p>
-        {% endfor %}
-
-        <!-- Visualization -->
-        <h2>Correlation Heatmap</h2>
-
-        {% if chart %}
-            <img src="{{ chart }}" alt="Heatmap" width="700">
-        {% else %}
-            <p>No numeric columns available for visualization.</p>
-        {% endif %}
-
-        <!-- Downloads -->
-        <h2>Download Reports</h2>
-
-        <a href="/download/cleaned" download>
-            <button>Download Cleaned CSV</button>
-        </a>
-
-        <a href="/download/pdf" download>
-            <button>Download PDF Report</button>
-        </a>
-
-        <a href="/download/docx" download>
-            <button>Download DOCX Report</button>
-        </a>
+        <div class="card">
+            <h3>Model Accuracy</h3>
+            {% if model_result.status == "success" %}
+                <p>{{ model_result.accuracy }}%</p>
+            {% else %}
+                <p>Failed</p>
+            {% endif %}
+        </div>
 
     </div>
+
+    <!-- Dataset Columns -->
+    <div class="section">
+        <h2>Dataset Columns</h2>
+        <div class="columns-box">
+            {% for col in summary.column_names %}
+                <span>{{ col }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Business Insights -->
+    <div class="section">
+        <h2>Business Insights</h2>
+        {% for insight in insights %}
+            <div class="insight-box">{{ insight }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Charts -->
+    <div class="section">
+        <h2>Visual Analytics</h2>
+
+        <div class="chart-grid">
+
+            {% if chart_paths.histogram %}
+            <div class="chart-card">
+                <h3>Histogram</h3>
+                <img src="{{ chart_paths.histogram }}">
+            </div>
+            {% endif %}
+
+            {% if chart_paths.boxplot %}
+            <div class="chart-card">
+                <h3>Boxplot</h3>
+                <img src="{{ chart_paths.boxplot }}">
+            </div>
+            {% endif %}
+
+            {% if chart_paths.scatter %}
+            <div class="chart-card">
+                <h3>Scatterplot</h3>
+                <img src="{{ chart_paths.scatter }}">
+            </div>
+            {% endif %}
+
+            {% if chart_paths.heatmap %}
+            <div class="chart-card">
+                <h3>Correlation Heatmap</h3>
+                <img src="{{ chart_paths.heatmap }}">
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Download Buttons -->
+    <div class="section">
+        <h2>Download Reports</h2>
+
+        <a href="/download/csv"><button>Cleaned CSV</button></a>
+        <a href="/download/pdf"><button>PDF Report</button></a>
+        <a href="/download/docx"><button>DOCX Report</button></a>
+    </div>
+
+</div>
 
 </body>
 </html>

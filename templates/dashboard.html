@@ -166,10 +166,15 @@
         <h2>Download Reports</h2>
 
         <div class="actions">
-            <a href="/download/csv"><button>Cleaned CSV</button></a>
-            <a href="/download/pdf"><button>PDF Report</button></a>
-            <a href="/download/docx"><button>DOCX Report</button></a>
+            <a href="{{ cleaned_url }}" target="_blank"><button>Cleaned CSV</button></a>
+            <a href="{{ pdf_url }}" target="_blank"><button>PDF Report</button></a>
+            <a href="{{ docx_url }}" target="_blank"><button>DOCX Report</button></a>
         </div>
+    </div>
+
+    <div class="actions">
+        <a href="/history"><button>View History</button></a>
+        <a href="/logout"><button>Logout</button></a>
     </div>
 
 </div>

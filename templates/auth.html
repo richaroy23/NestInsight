@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestInsight Authentication</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="page-shell">
+    <section class="hero-card auth-hero-card">
+
+        <div class="auth-intro">
+            <div class="eyebrow">NestInsight Access</div>
+            <h1 class="hero-title">Welcome to NestInsight</h1>
+            <p class="hero-copy">Sign in to turn sales CSVs into cleaner reports, clearer charts, and model results you can actually explain.</p>
+
+            <div class="hero-points auth-points">
+                <div class="hero-point">
+                    <strong>Secure access</strong>
+                    <span>Keep your analysis history and uploaded reports in one place.</span>
+                </div>
+                <div class="hero-point">
+                    <strong>Quick workflow</strong>
+                    <span>Go from upload to dashboard without a complicated setup.</span>
+                </div>
+                <div class="hero-point">
+                    <strong>Readable output</strong>
+                    <span>AI insights, charts, and metrics are formatted for easy review.</span>
+                </div>
+            </div>
+        </div>
+
+        <aside class="upload-panel">
+
+            {% if error_message %}
+            <div class="error-banner">{{ error_message }}</div>
+            {% endif %}
+
+            {% if success_message %}
+            <div class="success-banner">{{ success_message }}</div>
+            {% endif %}
+
+            <div class="auth-tabs" aria-label="Authentication mode">
+                <button type="button" class="auth-tab is-active" data-auth-target="login_panel" aria-pressed="true">Login</button>
+                <button type="button" class="auth-tab" data-auth-target="signup_panel" aria-pressed="false">Signup</button>
+            </div>
+
+            <div id="login_panel" class="auth-form-panel">
+                <div class="section-header auth-section-header">
+                    <h2>Login</h2>
+                    <p>Use your account to continue.</p>
+                </div>
+                <form action="/login" method="POST">
+                    <div class="upload-box">
+                        <label for="login_email">Email</label>
+                        <input id="login_email" type="email" name="email" placeholder="you@example.com" title="Email address" required>
+                    </div>
+
+                    <div class="upload-box">
+                        <label for="login_password">Password</label>
+                        <input id="login_password" type="password" name="password" placeholder="Enter your password" title="Password" required>
+                    </div>
+
+                    <div class="form-actions auth-actions">
+                        <button type="submit">Login</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="signup_panel" class="auth-form-panel is-hidden">
+                <div class="section-header auth-section-header">
+                    <h2>Signup</h2>
+                    <p>Create a new workspace account.</p>
+                </div>
+                <form action="/signup" method="POST">
+                    <div class="upload-box">
+                        <label for="signup_email">Email</label>
+                        <input id="signup_email" type="email" name="email" placeholder="you@example.com" title="Email address" required>
+                    </div>
+
+                    <div class="upload-box">
+                        <label for="signup_password">Password</label>
+                        <input id="signup_password" type="password" name="password" placeholder="Create a password" title="Password" required>
+                    </div>
+
+                    <div class="form-actions auth-actions">
+                        <button type="submit">Signup</button>
+                    </div>
+                </form>
+            </div>
+
+        </aside>
+
+    </section>
+</div>
+
+<script>
+    const authTabs = document.querySelectorAll('.auth-tab');
+    const authPanels = document.querySelectorAll('.auth-form-panel');
+
+    authTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.dataset.authTarget;
+
+            authTabs.forEach((item) => {
+                const isActive = item === tab;
+                item.classList.toggle('is-active', isActive);
+                item.setAttribute('aria-pressed', String(isActive));
+            });
+
+            authPanels.forEach((panel) => {
+                panel.classList.toggle('is-hidden', panel.id !== targetId);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

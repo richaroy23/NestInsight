@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Analysis History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="page-shell">
+    <section class="hero-card">
+
+        <div>
+            <div class="eyebrow">NestInsight</div>
+            <h1 class="hero-title">Your Analysis History</h1>
+            <p class="hero-copy">
+                View all your previously analyzed datasets and download reports.
+            </p>
+        </div>
+
+        <aside class="upload-panel">
+
+            {% if reports %}
+                {% for report in reports %}
+                <div class="history-card">
+                    <h3>{{ report.dataset_name }}</h3>
+
+                    <p><strong>Target:</strong> {{ report.target_column }}</p>
+                    <p><strong>Model Score:</strong> {{ report.model_score }}</p>
+
+                    <div class="actions">
+                        <a href="{{ report.cleaned_csv_url }}" target="_blank">
+                            <button>Cleaned CSV</button>
+                        </a>
+
+                        <a href="{{ report.pdf_url }}" target="_blank">
+                            <button>PDF Report</button>
+                        </a>
+
+                        <a href="{{ report.docx_url }}" target="_blank">
+                            <button>DOCX Report</button>
+                        </a>
+                    </div>
+                </div>
+                <hr>
+                {% endfor %}
+            {% else %}
+                <p>No previous reports found.</p>
+            {% endif %}
+
+            <div class="actions">
+                <a href="/dashboard"><button>New Analysis</button></a>
+                <a href="/logout"><button>Logout</button></a>
+            </div>
+
+        </aside>
+
+    </section>
+</div>
+
+</body>
+</html>

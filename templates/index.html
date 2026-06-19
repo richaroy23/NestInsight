@@ -3,100 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NestInsight</title>
+    <title>NestInsight Upload</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-    <div class="page-shell">
-        <section class="hero-card">
-            <div>
-                <div class="eyebrow">NestInsight • Sales Analytics Assistant</div>
-                <h1 class="hero-title">Turn CSV files into clean insights, charts, and a model summary in one pass.</h1>
-                <p class="hero-copy">Upload a sales dataset, choose the field you want to predict, and let NestInsight clean the file, generate analysis, train a model, and write reports. The interface stays simple, but the output is much easier to read.</p>
+<div class="page-shell">
+    <section class="hero-card">
+        <div>
+            <div class="eyebrow">NestInsight</div>
+            <h1 class="hero-title">Upload your CSV dataset</h1>
+            <p class="hero-copy">
+                Upload your dataset, choose the target column, and generate analysis instantly.
+            </p>
+        </div>
 
-                <div class="hero-points">
-                    <div class="hero-point">
-                        <strong>1. Upload</strong>
-                        <span>Drop in any CSV and the app reads the column names for you.</span>
-                    </div>
-                    <div class="hero-point">
-                        <strong>2. Choose target</strong>
-                        <span>Select the field to predict so the model matches your data.</span>
-                    </div>
-                    <div class="hero-point">
-                        <strong>3. Review results</strong>
-                        <span>See charts, insights, and a clear model score on the dashboard.</span>
-                    </div>
+        <aside class="upload-panel">
+
+            {% if error_message %}
+            <div class="error-banner">{{ error_message }}</div>
+            {% endif %}
+
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+                <div class="upload-box">
+                    <label for="file">CSV file</label>
+                    <input id="file" type="file" name="file" accept=".csv" required>
                 </div>
-            </div>
 
-            <aside class="upload-panel">
-                <h2>Start analysis</h2>
-                <p>Pick a CSV file and choose the column you want the model to learn from.</p>
+                <div class="upload-box">
+                    <label for="target_column">Target column</label>
+                    <select id="target_column" name="target_column" required disabled>
+                        <option value="">Upload CSV first</option>
+                    </select>
+                </div>
 
-                <form action="/upload" method="POST" enctype="multipart/form-data">
-                    <div class="upload-box">
-                        <label for="file">CSV file</label>
-                        <input id="file" type="file" name="file" accept=".csv" required>
-                    </div>
+                <button type="submit">Analyze Dataset</button>
+            </form>
 
-                    <div class="upload-box">
-                        <label for="target_column">Target column</label>
-                        <select id="target_column" name="target_column" required disabled>
-                            <option value="">Upload a CSV to load columns</option>
-                        </select>
-                        <small>Choose the exact column you want the model to predict.</small>
-                    </div>
+        </aside>
+    </section>
+</div>
 
-                    <div class="form-actions">
-                        <button type="submit">Analyze dataset</button>
-                        <span class="ghost-note">Results include cleaning, insights, model score, and reports.</span>
-                    </div>
-                </form>
-            </aside>
-        </section>
+<script>
+const fileInput = document.getElementById('file');
+const targetSelect = document.getElementById('target_column');
 
-        <section class="quick-guide panel" style="padding: 22px;">
-            <h2>What you get</h2>
-            <p>The app generates a cleaned file, visual analysis, AI-written business notes, and a model result that adapts to the field you choose.</p>
-        </section>
-    </div>
+fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
 
-    <script>
-        const fileInput = document.getElementById('file');
-        const targetSelect = document.getElementById('target_column');
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const text = event.target.result;
+        const firstLine = text.split(/\r?\n/)[0];
+        const columns = firstLine.split(',');
 
-        fileInput.addEventListener('change', () => {
-            const file = fileInput.files && fileInput.files[0];
+        targetSelect.innerHTML = '<option value="">Select Target</option>';
 
-            if (!file) {
-                targetSelect.innerHTML = '<option value="">Upload a CSV to load columns</option>';
-                targetSelect.disabled = true;
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const text = String(event.target.result || '');
-                const firstLine = text.split(/\r?\n/)[0];
-                const columns = firstLine.split(',').map((column) => column.trim()).filter(Boolean);
-
-                targetSelect.innerHTML = '<option value="">-- Select Target --</option>';
-
-                columns.forEach((column) => {
-                    const option = document.createElement('option');
-                    option.value = column;
-                    option.textContent = column;
-                    targetSelect.appendChild(option);
-                });
-
-                targetSelect.disabled = columns.length === 0;
-            };
-
-            reader.readAsText(file);
+        columns.forEach((col) => {
+            const option = document.createElement('option');
+            option.value = col.trim();
+            option.textContent = col.trim();
+            targetSelect.appendChild(option);
         });
-    </script>
+
+        targetSelect.disabled = false;
+    };
+
+    reader.readAsText(file);
+});
+</script>
 
 </body>
 </html>

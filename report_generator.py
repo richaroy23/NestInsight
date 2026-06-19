@@ -3,7 +3,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet
 from docx import Document
 
-def generate_pdf(summary, stats, insights, model_result, chart_paths):
+def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insights):
     os.makedirs("outputs/reports", exist_ok=True)
     
     pdf_path = "outputs/reports/report.pdf"
@@ -33,6 +33,8 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths):
     for insight in insights:
         elements.append(Paragraph(insight, styles['BodyText']))
     elements.append(Spacer(1, 20))
+    elements.append(Paragraph("AI Business Intelligence:", styles['Heading2']))
+    elements.append(Paragraph(ai_insights, styles['BodyText']))
 
     #Model Results
     elements.append(Paragraph("Model Results:", styles['Heading2']))
@@ -57,7 +59,7 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths):
     return pdf_path
 
 # Generate DOCX report
-def generate_docx(summary, stats, insights, model_result, chart_paths):
+def generate_docx(summary, stats, insights, model_result, chart_paths, ai_insights):
     os.makedirs("outputs/reports", exist_ok=True)
     
     docx_path = "outputs/reports/report.docx"
@@ -80,6 +82,8 @@ def generate_docx(summary, stats, insights, model_result, chart_paths):
     for insight in insights:
         doc.add_paragraph(insight)
 
+    doc.add_heading("AI Business Intelligence", level=1)
+    doc.add_paragraph(ai_insights)
     #Model Results
     doc.add_heading("Model Results:", level=1)
 

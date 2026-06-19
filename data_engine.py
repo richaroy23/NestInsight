@@ -1,16 +1,18 @@
+import os
+
 import pandas as pd
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
+os.makedirs("outputs/charts", exist_ok=True)
 #Load dataset
 def load_data(filepath):
     df = pd.read_csv(filepath)
@@ -186,7 +188,22 @@ def train_model(df):
 
 def business_insights(df):
     insights = []
+
     for col in df.select_dtypes(include='number').columns:
-        insights.append(f"{col} average is {df[col].mean()}")
-        insights.append(f"{col} highest is {df[col].max()}")
+        avg_value = round(df[col].mean(), 2)
+        max_value = round(df[col].max(), 2)
+        min_value = round(df[col].min(), 2)
+
+        insights.append(
+            f"The average value of {col} is {avg_value}"
+        )
+
+        insights.append(
+            f"The highest recorded value in {col} is {max_value}"
+        )
+
+        insights.append(
+            f"The lowest recorded value in {col} is {min_value}"
+        )
+
     return insights

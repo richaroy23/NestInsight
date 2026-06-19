@@ -59,9 +59,16 @@
     <!-- Business Insights -->
     <div class="section">
         <h2>Business Insights</h2>
-        {% for insight in insights %}
+        {% for insight in basic_insights %}
             <div class="insight-box">{{ insight }}</div>
         {% endfor %}
+    </div>
+
+    <div class="section">
+        <h2>AI Business Intelligence</h2>
+        <div class="insight-box">
+            <pre>{{ ai_insights }}</pre>
+        </div>
     </div>
 
     <!-- Charts -->

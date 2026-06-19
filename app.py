@@ -33,7 +33,7 @@ def upload_to_supabase(local_path, bucket_folder, filename):
         return None
 
     with open(local_path, "rb") as f:
-        supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}",f,{"upsert": True})
+        supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}",f,{"upsert": "true"})
 
     public_url = supabase.storage.from_("nestinsight-files").get_public_url(
         f"{bucket_folder}/{filename}"

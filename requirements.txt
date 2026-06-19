@@ -9,3 +9,5 @@ reportlab
 python-docx
 joblib
 openpyxl
+groq
+python-dotenv

@@ -1,18 +1,26 @@
 import os
-import google.generativeai as genai
+from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
-genai.configure(
-    api_key=os.getenv("GEMINI_API_KEY")
-)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
-model = genai.GenerativeModel("gemini-2.0-flash")
+client = None
+
+if GROQ_API_KEY:
+    try:
+        client = Groq(api_key=GROQ_API_KEY)
+    except Exception:
+        client = None
 
 
 def generate_ai_insights(summary, stats):
     try:
+        if client is None:
+            return "AI insights unavailable: set GROQ_API_KEY."
+
         prompt = f"""
         You are a senior business analyst.
 
@@ -31,8 +39,32 @@ def generate_ai_insights(summary, stats):
         4. Important trends
         """
 
-        response = model.generate_content(prompt)
+        try:
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+        except Exception as model_error:
+            fallback_model = "llama-3.1-8b-instant"
+            if GROQ_MODEL == fallback_model:
+                raise
 
-        return response.text
+            response = client.chat.completions.create(
+                model=fallback_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+
+        return response.choices[0].message.content
+
     except Exception as e:
         return f"AI Insight Generation Failed: {str(e)}"

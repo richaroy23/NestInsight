@@ -38,7 +38,7 @@
         <div class="card">
             <h3>Model Accuracy</h3>
             {% if model_result.status == "success" %}
-                <p>{{ model_result.accuracy }}%</p>
+                <p>{{ model_result.metric_name }}: {{ model_result.metric_value }}{% if model_result.metric_name == "Accuracy" %}%{% endif %}</p>
             {% else %}
                 <p>Failed</p>
             {% endif %}
@@ -80,28 +80,28 @@
             {% if chart_paths.histogram %}
             <div class="chart-card">
                 <h3>Histogram</h3>
-                <img src="{{ chart_paths.histogram }}">
+                <img src="{{ chart_paths.histogram }}" alt="Histogram chart" title="Histogram chart">
             </div>
             {% endif %}
 
             {% if chart_paths.boxplot %}
             <div class="chart-card">
                 <h3>Boxplot</h3>
-                <img src="{{ chart_paths.boxplot }}">
+                <img src="{{ chart_paths.boxplot }}" alt="Boxplot chart" title="Boxplot chart">
             </div>
             {% endif %}
 
             {% if chart_paths.scatter %}
             <div class="chart-card">
                 <h3>Scatterplot</h3>
-                <img src="{{ chart_paths.scatter }}">
+                <img src="{{ chart_paths.scatter }}" alt="Scatterplot chart" title="Scatterplot chart">
             </div>
             {% endif %}
 
             {% if chart_paths.heatmap %}
             <div class="chart-card">
                 <h3>Correlation Heatmap</h3>
-                <img src="{{ chart_paths.heatmap }}">
+                <img src="{{ chart_paths.heatmap }}" alt="Correlation heatmap" title="Correlation heatmap">
             </div>
             {% endif %}
 

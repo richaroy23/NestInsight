@@ -32,15 +32,16 @@ def upload():
     print("Generating summary...")
     summary = descriptive_analysis(df)
     print("Generating stats...")
-    stats = statistical_analysis(df)
+    stats = df.describe().to_dict()
     print("Generating charts...")
     chart_paths = generate_visuals(df)
     print("Training model...")
-    model_result = train_model(df)
+    target_column = request.form.get("target_column")
+    model_result = train_model(df, target_column=target_column)
     print("Generating business insights...")
     basic_insights = business_insights(df)
     print("Generating AI insights...")
-    ai_insights = "AI temorarily disabled"
+    ai_insights = generate_ai_insights(summary, stats)
 
     #Generate reports
     print("Generating reports...")

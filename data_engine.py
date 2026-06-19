@@ -109,7 +109,96 @@ def generate_visuals(df):
 
     return chart_paths
 
-def train_model(df):
+TARGET_KEYWORDS = [
+    "target",
+    "label",
+    "class",
+    "outcome",
+    "sale",
+    "sales",
+    "revenue",
+    "profit",
+    "amount",
+    "total",
+    "quantity",
+    "units",
+    "value",
+]
+
+
+def _select_target_column(df, target_column=None):
+    if target_column and target_column in df.columns:
+        return target_column
+
+    best_column = df.columns[-1]
+    best_score = float("-inf")
+
+    for index, column in enumerate(df.columns):
+        column_name = str(column).lower()
+        score = 0
+
+        for keyword in TARGET_KEYWORDS:
+            if keyword in column_name:
+                score += 8 if keyword in {"target", "label", "class", "outcome"} else 5
+
+        if pd.api.types.is_numeric_dtype(df[column]):
+            score += 2
+
+        if df[column].nunique(dropna=True) <= 1:
+            score -= 100
+
+        if "id" in column_name or "code" in column_name or "sku" in column_name:
+            score -= 10
+
+        if index == len(df.columns) - 1:
+            score += 1
+
+        if score > best_score:
+            best_score = score
+            best_column = column
+
+    return best_column
+
+
+def _is_classification_target(y):
+    if y.dtype == "object" or y.dtype == "bool":
+        return True
+
+    unique_count = y.nunique(dropna=True)
+    if unique_count <= 15 and unique_count <= max(10, len(y) * 0.1):
+        return True
+
+    return False
+
+
+def _prepare_features(X):
+    X = X.copy()
+    columns_to_drop = []
+
+    for column in X.columns:
+        column_name = str(column).lower()
+        unique_count = X[column].nunique(dropna=True)
+        unique_ratio = unique_count / max(len(X), 1)
+
+        if ("id" in column_name or "code" in column_name or "sku" in column_name) and unique_ratio > 0.6:
+            columns_to_drop.append(column)
+            continue
+
+        if X[column].dtype == "object" and unique_count > 25:
+            top_categories = X[column].value_counts(dropna=False).nlargest(20).index
+            X[column] = X[column].where(X[column].isin(top_categories), "Other")
+
+    if columns_to_drop:
+        X = X.drop(columns=columns_to_drop)
+
+    categorical_columns = X.select_dtypes(include=["object", "category", "bool"]).columns
+    if len(categorical_columns) > 0:
+        X = pd.get_dummies(X, columns=list(categorical_columns), drop_first=True)
+
+    return X
+
+
+def train_model(df, target_column=None):
     try:
         # Check if dataset has enough columns
         if df.shape[1] < 2:
@@ -118,57 +207,75 @@ def train_model(df):
                 "message": "Not enough columns for training"
             }
 
-        # Separate features and target (last column as target)
-        X = df.iloc[:, :-1]
-        y = df.iloc[:, -1]
+        selected_target_column = _select_target_column(df, target_column)
+
+        if selected_target_column not in df.columns:
+            return {
+                "status": "failed",
+                "message": "Could not determine a target column for training"
+            }
+
+        # Separate features and target using the selected target column
+        X = df.drop(columns=[selected_target_column])
+        y = df[selected_target_column]
 
         # Remove rows where target is missing
         valid_rows = y.notnull()
         X = X[valid_rows]
         y = y[valid_rows]
 
-        # Convert categorical input columns into numeric
-        drop_cols = []
-
-        for col in X.select_dtypes(include='object').columns:
-            if X[col].nunique() > 50:
-                drop_cols.append(col)
-
-        X = X.drop(columns=drop_cols)
-        X = pd.get_dummies(X)
+        X = _prepare_features(X)
 
         # Convert categorical target into labels
-        is_classification = False
+        is_classification = _is_classification_target(y)
 
-        if y.dtype == "object":
+        if y.dtype == "object" or y.dtype == "bool":
             y = pd.factorize(y)[0]
-            is_classification = True
 
         # Ensure enough rows after cleaning
-        if len(X) < 5:
+        if len(X) < 5 or X.shape[1] == 0:
             return {
                 "status": "failed",
                 "message": "Not enough valid rows for training"
             }
 
+        if len(y.unique()) < 2:
+            return {
+                "status": "failed",
+                "message": "Target column must contain at least two classes or values"
+            }
+
         # Split dataset
+        stratify = None
+        if is_classification:
+            class_counts = y.value_counts()
+            if not class_counts.empty and class_counts.min() >= 2:
+                stratify = y
+
         X_train, X_test, y_train, y_test = train_test_split(
             X,
             y,
             test_size=0.2,
-            random_state=42
+            random_state=42,
+            stratify=stratify
         )
 
         # Train model
         if is_classification:
             model = RandomForestClassifier(
-                n_estimators=100,
-                random_state=42
+                n_estimators=50,
+                max_depth=12,
+                min_samples_leaf=2,
+                random_state=42,
+                n_jobs=-1
             )
         else:
             model = RandomForestRegressor(
-                n_estimators=100,
-                random_state=42
+                n_estimators=50,
+                max_depth=12,
+                min_samples_leaf=2,
+                random_state=42,
+                n_jobs=-1
             )
 
         model.fit(X_train, y_train)
@@ -196,6 +303,7 @@ def train_model(df):
             "metric_value": rounded_score,
             "score": rounded_score,
             "accuracy": rounded_score,
+            "target_column": selected_target_column,
             "model_path": model_path
         }
 

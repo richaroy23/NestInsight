@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error
 
-os.makedirs("outputs/charts", exist_ok=True)
+os.makedirs("static/charts", exist_ok=True)
 #Load dataset
 def load_data(filepath):
     df = pd.read_csv(filepath)
@@ -71,7 +71,7 @@ def generate_visuals(df):
     # Histogram
     plt.figure(figsize=(8, 6))
     df[numeric_cols[0]].hist()
-    histogram_path = "outputs/charts/histogram.png"
+    histogram_path = "static/charts/histogram.png"
     plt.savefig(histogram_path)
     plt.close()
     chart_paths["histogram"] = histogram_path
@@ -79,7 +79,7 @@ def generate_visuals(df):
     # Boxplot
     plt.figure(figsize=(8, 6))
     sns.boxplot(x=df[numeric_cols[0]])
-    boxplot_path = "outputs/charts/boxplot.png"
+    boxplot_path = "static/charts/boxplot.png"
     plt.savefig(boxplot_path)
     plt.close()
     chart_paths["boxplot"] = boxplot_path
@@ -91,7 +91,7 @@ def generate_visuals(df):
             x=df[numeric_cols[0]],
             y=df[numeric_cols[1]]
         )
-        scatter_path = "outputs/charts/scatter.png"
+        scatter_path = "static/charts/scatter.png"
         plt.savefig(scatter_path)
         plt.close()
         chart_paths["scatter"] = scatter_path
@@ -102,7 +102,7 @@ def generate_visuals(df):
     if not corr.empty:
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr, annot=True)
-        heatmap_path = "outputs/charts/heatmap.png"
+        heatmap_path = "static/charts/heatmap.png"
         plt.savefig(heatmap_path)
         plt.close()
         chart_paths["heatmap"] = heatmap_path
@@ -138,8 +138,11 @@ def train_model(df):
         X = pd.get_dummies(X)
 
         # Convert categorical target into labels
+        is_classification = False
+
         if y.dtype == "object":
             y = pd.factorize(y)[0]
+            is_classification = True
 
         # Ensure enough rows after cleaning
         if len(X) < 5:
@@ -157,26 +160,42 @@ def train_model(df):
         )
 
         # Train model
-        model = RandomForestClassifier(
-            n_estimators=100,
-            random_state=42
-        )
+        if is_classification:
+            model = RandomForestClassifier(
+                n_estimators=100,
+                random_state=42
+            )
+        else:
+            model = RandomForestRegressor(
+                n_estimators=100,
+                random_state=42
+            )
 
         model.fit(X_train, y_train)
 
         # Predictions
         predictions = model.predict(X_test)
 
-        # Accuracy
-        accuracy = accuracy_score(y_test, predictions)
+        # Calculate score
+        if is_classification:
+            score = accuracy_score(y_test, predictions)
+            metric_name = "Accuracy"
+        else:
+            score = mean_absolute_error(y_test, predictions)
+            metric_name = "MAE"
 
         # Save model
         model_path = "outputs/model.pkl"
         joblib.dump(model, model_path)
+    
+        rounded_score = round(score, 2)
 
         return {
             "status": "success",
-            "accuracy": round(accuracy * 100, 2),
+            "metric_name": metric_name,
+            "metric_value": rounded_score,
+            "score": rounded_score,
+            "accuracy": rounded_score,
             "model_path": model_path
         }
 

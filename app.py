@@ -21,20 +21,29 @@ def upload():
     file.save(filepath)
     
     #Load dataset
+    print("Loading dataset...")
     df = load_data(filepath)
 
     #Clean dataset
+    print("Cleaning dataset...")
     df, cleaned_path, cleaning_report = clean_data(df)
     
     #Analysis
+    print("Generating summary...")
     summary = descriptive_analysis(df)
+    print("Generating stats...")
     stats = statistical_analysis(df)
+    print("Generating charts...")
     chart_paths = generate_visuals(df)
+    print("Training model...")
     model_result = train_model(df)
+    print("Generating business insights...")
     basic_insights = business_insights(df)
-    ai_insights = generate_ai_insights(summary, stats)
+    print("Generating AI insights...")
+    ai_insights = "AI temorarily disabled"
 
     #Generate reports
+    print("Generating reports...")
     pdf_path = generate_pdf(summary, stats, basic_insights, model_result, chart_paths, ai_insights)
     docx_path = generate_docx(summary, stats, basic_insights, model_result, chart_paths, ai_insights)
     

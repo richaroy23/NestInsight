@@ -3,6 +3,12 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet
 from docx import Document
 
+
+def _get_model_metric(model_result):
+    metric_name = model_result.get("metric_name", "Score")
+    metric_value = model_result.get("metric_value", model_result.get("accuracy", model_result.get("score")))
+    return metric_name, metric_value
+
 def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insights):
     os.makedirs("outputs/reports", exist_ok=True)
     
@@ -40,7 +46,9 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insight
     elements.append(Paragraph("Model Results:", styles['Heading2']))
     
     if model_result["status"] == "success":
-        elements.append(Paragraph(f"Accuracy: {model_result['accuracy']}%", styles['BodyText']))
+        metric_name, metric_value = _get_model_metric(model_result)
+        suffix = "%" if metric_name == "Accuracy" else ""
+        elements.append(Paragraph(f"{metric_name}: {metric_value}{suffix}", styles['BodyText']))
         elements.append(Paragraph(f"Model Path: {model_result['model_path']}", styles['BodyText']))
     else:
         elements.append(Paragraph(f"Training Failed: {model_result['message']}", styles['BodyText']))
@@ -88,7 +96,9 @@ def generate_docx(summary, stats, insights, model_result, chart_paths, ai_insigh
     doc.add_heading("Model Results:", level=1)
 
     if model_result["status"] == "success":
-        doc.add_paragraph(f"Accuracy: {model_result['accuracy']}%")
+        metric_name, metric_value = _get_model_metric(model_result)
+        suffix = "%" if metric_name == "Accuracy" else ""
+        doc.add_paragraph(f"{metric_name}: {metric_value}{suffix}")
         doc.add_paragraph(f"Model Path: {model_result['model_path']}")
     else:
         doc.add_paragraph(f"Training Failed: {model_result['message']}")

@@ -11,9 +11,10 @@ import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error
+from sklearn.metrics import accuracy_score, mean_absolute_error
 
 os.makedirs("static/charts", exist_ok=True)
+
 #Load dataset
 def load_data(filepath):
     df = pd.read_csv(filepath)

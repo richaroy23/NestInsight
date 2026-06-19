@@ -33,7 +33,7 @@ def upload_to_supabase(local_path, bucket_folder, filename):
         return None
 
     with open(local_path, "rb") as f:
-        supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}", f)
+        supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}",f,{"upsert": True})
 
     public_url = supabase.storage.from_("nestinsight-files").get_public_url(
         f"{bucket_folder}/{filename}"
@@ -205,5 +205,4 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"
     host = os.getenv("FLASK_HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "5000"))
-    if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

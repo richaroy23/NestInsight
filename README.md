@@ -61,7 +61,6 @@ It helps users clean data, generate visual insights, train machine learning mode
 
 * HTML
 * CSS
-* JavaScript
 
 ---
 

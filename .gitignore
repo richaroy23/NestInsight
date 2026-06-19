@@ -7,3 +7,5 @@ uploads/
 *.pkl
 .idea/
 .vscode/ 
+.venv/
+static/charts/

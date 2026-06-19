@@ -1,9 +1,15 @@
 from flask import Flask, render_template, request, send_file
+from markupsafe import Markup
+import markdown
 from data_engine import *
 from report_generator import *
 from gemini_engine import generate_ai_insights
 
 app = Flask(__name__)
+
+
+def render_markdown_text(text):
+    return Markup(markdown.markdown(text or "", extensions=["extra", "sane_lists"]))
 
 #Home
 @app.route('/')
@@ -40,8 +46,10 @@ def upload():
     model_result = train_model(df, target_column=target_column)
     print("Generating business insights...")
     basic_insights = business_insights(df)
+    basic_insights.append(model_performance_insight(model_result))
     print("Generating AI insights...")
     ai_insights = generate_ai_insights(summary, stats)
+    ai_insights_html = render_markdown_text(ai_insights)
 
     #Generate reports
     print("Generating reports...")
@@ -60,7 +68,8 @@ def upload():
     cleaned_path=cleaned_path,
     pdf_path=pdf_path,
     docx_path=docx_path,
-    ai_insights=ai_insights
+    ai_insights=ai_insights,
+    ai_insights_html=ai_insights_html
 )
 
 @app.route('/download/pdf')

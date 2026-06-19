@@ -10,7 +10,39 @@
 
 <div class="container">
 
-    <h1>📊 NestInsight Dashboard</h1>
+    <section class="dashboard-hero">
+        <div class="summary-panel">
+            <div class="eyebrow">NestInsight Dashboard</div>
+            <h1 class="dashboard-title">Your dataset summary at a glance.</h1>
+            <p class="dashboard-copy">This report brings together the cleaned data, visual trends, business notes, and the model score for the field you selected.</p>
+
+            <div class="metric-strip">
+                <div class="metric-chip">
+                    <strong>Rows</strong>
+                    <span>{{ summary.rows }}</span>
+                </div>
+                <div class="metric-chip">
+                    <strong>Columns</strong>
+                    <span>{{ summary.columns }}</span>
+                </div>
+                <div class="metric-chip">
+                    <strong>Model field</strong>
+                    <span>{{ model_result.target_column if model_result.status == "success" else "Not available" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-panel">
+            <div class="eyebrow">Model result</div>
+            <h2 class="dashboard-subtitle">{{ model_result.metric_name if model_result.status == "success" else "Training result" }}</h2>
+            {% if model_result.status == "success" %}
+                <p class="metric-value">{{ model_result.metric_value }}{% if model_result.metric_name == "Accuracy" %}%{% endif %}</p>
+            {% else %}
+                <p class="metric-value">{{ model_result.message }}</p>
+            {% endif %}
+            <p class="report-note">The dashboard uses a simple label so the metric is easy to understand even if the model is doing regression.</p>
+        </div>
+    </section>
 
     <!-- KPI Cards -->
     <div class="cards">
@@ -36,11 +68,11 @@
         </div>
 
         <div class="card">
-            <h3>Model Accuracy</h3>
+            <h3>Model {{ model_result.metric_name if model_result.status == "success" else "Result" }}</h3>
             {% if model_result.status == "success" %}
-                <p>{{ model_result.metric_name }}: {{ model_result.metric_value }}{% if model_result.metric_name == "Accuracy" %}%{% endif %}</p>
+                <p>{{ model_result.metric_value }}{% if model_result.metric_name == "Accuracy" %}%{% endif %}</p>
             {% else %}
-                <p>Failed</p>
+                <p>{{ model_result.message }}</p>
             {% endif %}
         </div>
 
@@ -57,17 +89,38 @@
     </div>
 
     <!-- Business Insights -->
+    <!-- Business Insights -->
     <div class="section">
-        <h2>Business Insights</h2>
-        {% for insight in basic_insights %}
-            <div class="insight-box">{{ insight }}</div>
-        {% endfor %}
+        <div class="section-header">
+            <h2>Business Insights</h2>
+            <p>Key performance indicators extracted from your dataset.</p>
+        </div>
+
+        <div class="insight-grid">
+            {% for insight in basic_insights %}
+            <div class="insight-card">
+                <div class="insight-icon">📊</div>
+                <p>{{ insight }}</p>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 
+    <!-- AI Business Intelligence -->
     <div class="section">
-        <h2>AI Business Intelligence</h2>
-        <div class="insight-box">
-            <pre>{{ ai_insights }}</pre>
+        <div class="ai-panel panel">
+            
+            <div class="ai-panel-header">
+                <div class="eyebrow">AI Business Intelligence</div>
+                <h2>Strategic Analysis</h2>
+            </div>
+
+            <div class="ai-panel-body">
+                <div class="ai-summary">
+                    {{ ai_insights_html }}
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -112,9 +165,11 @@
     <div class="section">
         <h2>Download Reports</h2>
 
-        <a href="/download/csv"><button>Cleaned CSV</button></a>
-        <a href="/download/pdf"><button>PDF Report</button></a>
-        <a href="/download/docx"><button>DOCX Report</button></a>
+        <div class="actions">
+            <a href="/download/csv"><button>Cleaned CSV</button></a>
+            <a href="/download/pdf"><button>PDF Report</button></a>
+            <a href="/download/docx"><button>DOCX Report</button></a>
+        </div>
     </div>
 
 </div>

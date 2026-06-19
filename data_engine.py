@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 import joblib
+
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error
@@ -164,6 +165,14 @@ def _is_classification_target(y):
     if y.dtype == "object" or y.dtype == "bool":
         return True
 
+    if pd.api.types.is_float_dtype(y):
+        return False
+
+    if pd.api.types.is_integer_dtype(y):
+        unique_count = y.nunique(dropna=True)
+        # Treat integer targets as classes only when cardinality is reasonably small.
+        return unique_count <= max(20, int(len(y) * 0.1))
+
     unique_count = y.nunique(dropna=True)
     if unique_count <= 15 and unique_count <= max(10, len(y) * 0.1):
         return True
@@ -173,6 +182,16 @@ def _is_classification_target(y):
 
 def _prepare_features(X):
     X = X.copy()
+
+    # Drop obvious useless columns manually
+    drop_cols = [
+        "Transaction ID",
+        "Customer ID",
+        "Transaction Date"
+    ]
+
+    X = X.drop(columns=drop_cols, errors="ignore")
+
     columns_to_drop = []
 
     for column in X.columns:
@@ -180,10 +199,12 @@ def _prepare_features(X):
         unique_count = X[column].nunique(dropna=True)
         unique_ratio = unique_count / max(len(X), 1)
 
+        # Drop ID-like columns dynamically
         if ("id" in column_name or "code" in column_name or "sku" in column_name) and unique_ratio > 0.6:
             columns_to_drop.append(column)
             continue
 
+        # Compress high-cardinality categorical values
         if X[column].dtype == "object" and unique_count > 25:
             top_categories = X[column].value_counts(dropna=False).nlargest(20).index
             X[column] = X[column].where(X[column].isin(top_categories), "Other")
@@ -191,9 +212,15 @@ def _prepare_features(X):
     if columns_to_drop:
         X = X.drop(columns=columns_to_drop)
 
+    # Feature engineering
+    if "Price Per Unit" in X.columns and "Quantity" in X.columns:
+        X["Price_x_Quantity"] = X["Price Per Unit"] * X["Quantity"]
+
+    # Compact categorical encoding to avoid massive one-hot matrices on wide CSVs
     categorical_columns = X.select_dtypes(include=["object", "category", "bool"]).columns
-    if len(categorical_columns) > 0:
-        X = pd.get_dummies(X, columns=list(categorical_columns), drop_first=True)
+    for column in categorical_columns:
+        encoded, _ = pd.factorize(X[column].astype(str).fillna("Missing"))
+        X[column] = encoded
 
     return X
 
@@ -227,11 +254,11 @@ def train_model(df, target_column=None):
         X = _prepare_features(X)
 
         # Convert categorical target into labels
-        is_classification = _is_classification_target(y)
-
         if y.dtype == "object" or y.dtype == "bool":
-            y = pd.factorize(y)[0]
+            y = pd.Series(pd.factorize(y)[0])
 
+        is_classification = _is_classification_target(y)
+        
         # Ensure enough rows after cleaning
         if len(X) < 5 or X.shape[1] == 0:
             return {
@@ -239,7 +266,7 @@ def train_model(df, target_column=None):
                 "message": "Not enough valid rows for training"
             }
 
-        if len(y.unique()) < 2:
+        if len(pd.Series(y).unique()) < 2:
             return {
                 "status": "failed",
                 "message": "Target column must contain at least two classes or values"
@@ -248,7 +275,7 @@ def train_model(df, target_column=None):
         # Split dataset
         stratify = None
         if is_classification:
-            class_counts = y.value_counts()
+            class_counts = pd.Series(y).value_counts()
             if not class_counts.empty and class_counts.min() >= 2:
                 stratify = y
 
@@ -287,24 +314,25 @@ def train_model(df, target_column=None):
         if is_classification:
             score = accuracy_score(y_test, predictions)
             metric_name = "Accuracy"
+            display_score = round(score * 100, 2)
         else:
             score = mean_absolute_error(y_test, predictions)
             metric_name = "MAE"
+            display_score = round(score, 2)
 
         # Save model
         model_path = "outputs/model.pkl"
-        joblib.dump(model, model_path)
-    
-        rounded_score = round(score, 2)
 
+        joblib.dump(model, model_path)
+            
         return {
             "status": "success",
             "metric_name": metric_name,
-            "metric_value": rounded_score,
-            "score": rounded_score,
-            "accuracy": rounded_score,
+            "metric_value": display_score,
+            "score": round(score, 2),
+            "accuracy": display_score,
             "target_column": selected_target_column,
-            "model_path": model_path
+            "model_path": model_path,
         }
 
     except Exception as e:
@@ -334,3 +362,23 @@ def business_insights(df):
         )
 
     return insights
+
+
+def model_performance_insight(model_result):
+    if not model_result or model_result.get("status") != "success":
+        return "Model training did not complete, so there is no performance score to explain."
+
+    metric_name = model_result.get("metric_name", "Score")
+    metric_value = model_result.get("metric_value", model_result.get("accuracy", model_result.get("score", "N/A")))
+    target_column = model_result.get("target_column", "the selected field")
+
+    if metric_name == "Accuracy":
+        return (
+            f"The model predicted {target_column} correctly about {metric_value}% of the time, "
+            "so a higher number means the model is making more correct predictions."
+        )
+
+    return (
+        f"The model's MAE for {target_column} is {metric_value}, which means its predictions are "
+        "off by about that amount on average, so lower is better."
+    )

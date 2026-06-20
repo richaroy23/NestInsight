@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+# llama-3.1-8b-instant was deprecated by Groq on 2026-06-17.
+# openai/gpt-oss-20b is Groq's recommended replacement.
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 
 client = None
 
@@ -50,7 +52,9 @@ def generate_ai_insights(summary, stats):
                 ]
             )
         except Exception as model_error:
-            fallback_model = "llama-3.1-8b-instant"
+            # Fallback must be a different model from the primary one, or it
+            # offers no real protection if the primary model is unavailable.
+            fallback_model = "openai/gpt-oss-120b"
             if GROQ_MODEL == fallback_model:
                 raise
 

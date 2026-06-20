@@ -50,7 +50,8 @@ body::before {
 .chart-card,
 .card,
 .insight-box,
-.upload-panel {
+.upload-panel,
+.history-card {
     background: var(--card);
     color: #0f172a;
     border: 1px solid var(--card-border);
@@ -159,6 +160,36 @@ h3 {
     margin: 0 0 14px;
     color: #475569;
     line-height: 1.6;
+}
+
+.history-card {
+    padding: 22px;
+    margin-bottom: 18px;
+}
+
+.history-card h3 {
+    margin: 0 0 10px;
+    color: #0f172a;
+}
+
+.history-card p {
+    margin: 0 0 8px;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.history-card p strong {
+    color: #0f172a;
+}
+
+.history-card .actions {
+    margin-top: 14px;
+}
+
+.upload-panel hr {
+    border: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+    margin: 18px 0;
 }
 
 .auth-hero-card {

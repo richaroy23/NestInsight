@@ -166,7 +166,7 @@ def upload():
             }).execute()
         except Exception as supabase_error:
             print("SUPABASE ERROR:", supabase_error)
-            raise
+            
 
     #Render dashboard 
     return render_template(

@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 import joblib
+import folium
 
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
@@ -22,7 +23,6 @@ def load_data(filepath):
     return df
 
 def clean_data(df):
-
     missing_before = df.isnull().sum().sum()
     duplicates_before = df.duplicated().sum()
 
@@ -154,6 +154,25 @@ def forecast_sales(df):
     plt.close()
 
     return forecast_path
+
+def generate_map(df):
+    if "Latitude" not in df.columns or "Longitude" not in df.columns:
+        return None
+
+    map_obj = folium.Map(
+        location=[df["Latitude"].mean(), df["Longitude"].mean()],
+        zoom_start=5
+    )
+
+    for _, row in df.iterrows():
+        folium.Marker(
+            [row["Latitude"], row["Longitude"]]
+        ).add_to(map_obj)
+
+    map_path = "templates/map.html"
+    map_obj.save(map_path)
+
+    return map_path
 
 TARGET_KEYWORDS = [
     "target",

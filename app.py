@@ -133,7 +133,7 @@ def upload():
     forecast_chart = forecast_sales(df)
     if forecast_chart:
         chart_paths["forecast"] = forecast_chart
-
+    map_file = generate_map(df)
     target_column = request.form.get("target_column")
     model_result = train_model(df, target_column=target_column)
     basic_insights = business_insights(df)
@@ -184,7 +184,8 @@ def upload():
         ai_insights_html=ai_insights_html,
         cleaned_url=cleaned_url,
         pdf_url=pdf_url,
-        docx_url=docx_url
+        docx_url=docx_url,
+        map_file=map_file
     )
 
 #History page
@@ -197,6 +198,10 @@ def history():
 
     reports = supabase.table("reports").select("*").eq("user_id", user_id).execute()
     return render_template("history.html", reports=reports.data)
+
+@app.route("/map")
+def map_view():
+    return render_template("map.html")
 
 #Logout
 @app.route("/logout")

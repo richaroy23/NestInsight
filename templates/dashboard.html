@@ -141,6 +141,7 @@
                 <option value="boxplot">Boxplot</option>
                 <option value="scatter">Scatterplot</option>
                 <option value="heatmap">Heatmap</option>
+                <option value="forecast">Forecast</option>
             </select>
 
         </div>
@@ -180,6 +181,13 @@
             </div>
             {% endif %}
 
+            {% if chart_paths.forecast %}
+            <div class="chart-card" data-chart="forecast">
+                <h3>Sales Forecast</h3>
+                <img src="{{ chart_paths.forecast }}" alt="Sales forecast" title="Sales forecast">
+            </div>
+            {% endif %}
+
         </div>
     </div>
 
@@ -202,9 +210,9 @@
         <h2>Download Reports</h2>
 
         <div class="actions">
-            <a href="{{ cleaned_url }}" target="_blank"><button>Cleaned CSV</button></a>
-            <a href="{{ pdf_url }}" target="_blank"><button>PDF Report</button></a>
-            <a href="{{ docx_url }}" target="_blank"><button>DOCX Report</button></a>
+            <a href="{{ cleaned_url }}" download><button>Cleaned CSV</button></a>
+            <a href="{{ pdf_url }}" download><button>PDF Report</button></a>
+            <a href="{{ docx_url }}" download><button>DOCX Report</button></a>
         </div>
     </div>
 

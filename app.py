@@ -7,7 +7,7 @@ import markdown
 from werkzeug.utils import secure_filename
 from data_engine import *
 from report_generator import *
-from gemini_engine import generate_ai_insights
+from groq_engine import generate_ai_insights
 
 try:
     from supabase_client import supabase
@@ -33,7 +33,7 @@ def upload_to_supabase(local_path, bucket_folder, filename):
         return None
 
     with open(local_path, "rb") as f:
-        supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}",f,{"upsert": "true"})
+        supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}",f,{"upsert": "true", "content-type": "application/octet-stream"})
 
     public_url = supabase.storage.from_("nestinsight-files").get_public_url(
         f"{bucket_folder}/{filename}"

@@ -28,15 +28,15 @@
                     <p><strong>Model Score:</strong> {{ report.model_score }}</p>
 
                     <div class="actions">
-                        <a href="{{ report.cleaned_csv_url }}" target="_blank">
+                        <a href="{{ report.cleaned_csv_url }}" download>
                             <button>Cleaned CSV</button>
                         </a>
 
-                        <a href="{{ report.pdf_url }}" target="_blank">
+                        <a href="{{ report.pdf_url }}" download>
                             <button>PDF Report</button>
                         </a>
 
-                        <a href="{{ report.docx_url }}" target="_blank">
+                        <a href="{{ report.docx_url }}" download>
                             <button>DOCX Report</button>
                         </a>
                     </div>

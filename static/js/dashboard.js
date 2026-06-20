@@ -10,7 +10,7 @@ if (chartFilter) {
                 selected === "all" ||
                 card.dataset.chart === selected
             ) {
-                card.style.display = "block";
+                card.style.display = "";
             } else {
                 card.style.display = "none";
             }

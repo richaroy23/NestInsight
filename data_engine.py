@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, mean_absolute_error
 
 os.makedirs("static/charts", exist_ok=True)
+os.makedirs("static/maps", exist_ok=True)
 
 #Load dataset
 def load_data(filepath):
@@ -121,23 +122,57 @@ def generate_visuals(df):
     return chart_paths
 
 def forecast_sales(df):
-    if "Transaction Date" not in df.columns:
+    date_col = None
+    sales_col = None
+
+    #Auto-detect date and sales columns
+    for col in df.columns:
+        col_lower = col.lower()
+
+        if "date" in col.lower():
+            date_col = col
+
+        if (
+            "total" in col.lower() 
+            or "sales" in col.lower() 
+            or "amount" in col.lower()
+            or "revenue" in col.lower()
+            or "profit" in col.lower()
+            or "value" in col.lower()
+            or "quantity" in col.lower()
+            or "units" in col.lower()
+            or "price" in col.lower()
+            or "cost" in col.lower()
+        ):
+            sales_col = col
+
+    #Skip if not found
+    if not date_col or not sales_col:
         return None
 
-    if "Total" not in df.columns:
-        return None
+    #Convert detected date column
+    df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
 
-    df["Transaction Date"] = pd.to_datetime(df["Transaction Date"])
-    daily_sales = df.groupby("Transaction Date")["Total"].sum().reset_index()
+    #Remove invalid dates
+    df = df.dropna(subset=[date_col])
 
+    #Group sales by detected date columns
+    daily_sales = df.groupby(date_col)[sales_col].sum().reset_index()
+
+    #Create numerical timeline
     daily_sales["day_num"] = range(len(daily_sales))
 
     X = daily_sales[["day_num"]]
-    y = daily_sales["Total"]
+    y = daily_sales[sales_col]
 
     model = LinearRegression()
     model.fit(X, y)
 
+    future_days = pd.DataFrame({
+        "day_num": range(len(daily_sales), len(daily_sales) + 7)
+    })
+
+    #Future predictions
     future_days = pd.DataFrame({
         "day_num": range(len(daily_sales), len(daily_sales) + 7)
     })
@@ -147,12 +182,22 @@ def forecast_sales(df):
     forecast_path = "static/charts/forecast.png"
 
     plt.figure(figsize=(8, 6))
-    plt.plot(daily_sales["Transaction Date"], daily_sales["Total"], label="Actual")
+
+    #Actual sales
     plt.plot(
-        pd.date_range(
-            daily_sales["Transaction Date"].max(),
-            periods=7
-        ),
+        daily_sales[date_col], 
+        daily_sales[sales_col], 
+        label="Actual"
+    )
+    
+    #Forecasted sales
+    future_dates = pd.date_range(
+        start=daily_sales[date_col].max(),
+        periods=7
+    )
+
+    plt.plot(
+        future_dates,
         predictions,
         label="Forecast"
     )
@@ -177,7 +222,7 @@ def generate_map(df):
             [row["Latitude"], row["Longitude"]]
         ).add_to(map_obj)
 
-    map_path = "static/map.html"
+    map_path = "static/maps/map.html"
     map_obj.save(map_path)
 
     return map_path

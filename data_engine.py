@@ -133,16 +133,11 @@ def forecast_sales(df):
             date_col = col
 
         if (
-            "total" in col.lower() 
-            or "sales" in col.lower() 
+            "sales" in col.lower()
+            or "total" in col.lower()
             or "amount" in col.lower()
             or "revenue" in col.lower()
             or "profit" in col.lower()
-            or "value" in col.lower()
-            or "quantity" in col.lower()
-            or "units" in col.lower()
-            or "price" in col.lower()
-            or "cost" in col.lower()
         ):
             sales_col = col
 
@@ -167,10 +162,6 @@ def forecast_sales(df):
 
     model = LinearRegression()
     model.fit(X, y)
-
-    future_days = pd.DataFrame({
-        "day_num": range(len(daily_sales), len(daily_sales) + 7)
-    })
 
     #Future predictions
     future_days = pd.DataFrame({
@@ -311,7 +302,8 @@ def _prepare_features(X):
 
     # Convert datetime columns into numeric timestamps
     for col in X.columns:
-        if pd.api.types.is_datetime64_any_dtype(X[col]):
+        if "date" in col.lower():
+            X[col] = pd.to_datetime(X[col], errors="coerce")
             X[col] = X[col].astype("int64") // 10**9
 
     columns_to_drop = []
@@ -339,10 +331,13 @@ def _prepare_features(X):
         X["Price_x_Quantity"] = X["Price Per Unit"] * X["Quantity"]
 
     # Compact categorical encoding to avoid massive one-hot matrices on wide CSVs
-    categorical_columns = X.select_dtypes(include=["object", "category", "bool"]).columns
-    for column in categorical_columns:
-        encoded, _ = pd.factorize(X[column].astype(str).fillna("Missing"))
-        X[column] = encoded
+    for column in X.columns:
+        # Convert all non-numeric columns
+        if not pd.api.types.is_numeric_dtype(X[column]):
+            X[column] = X[column].astype(str).fillna("Missing")
+
+            encoded, _ = pd.factorize(X[column])
+            X[column] = encoded
 
     return X
 
@@ -376,8 +371,8 @@ def train_model(df, target_column=None):
         X = _prepare_features(X)
 
         # Convert categorical target into labels
-        if y.dtype == "object" or y.dtype == "bool":
-            y = pd.Series(pd.factorize(y)[0])
+        if not pd.api.types.is_numeric_dtype(y):
+            y = pd.Series(pd.factorize(y.astype(str))[0])
 
         is_classification = _is_classification_target(y)
         

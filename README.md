@@ -327,7 +327,7 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_role_key
 SECRET_KEY=your_flask_secret_key
 GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=llama-3.1-8b-instant
+GROQ_MODEL=openai/gpt-oss-20b
 PORT=5000
 ```
 

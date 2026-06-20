@@ -414,7 +414,7 @@ NestInsight is deployed using Render and Supabase. Before deployment, make sure 
 
 ```bash
 gunicorn app:app
-
+```
 ---
 
 ## Future Improvements
@@ -431,4 +431,5 @@ gunicorn app:app
 * API access for external integrations
 
 ---
+
 For ReadyNest Internship Week 1

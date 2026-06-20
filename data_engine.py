@@ -19,8 +19,16 @@ os.makedirs("static/charts", exist_ok=True)
 
 #Load dataset
 def load_data(filepath):
-    df = pd.read_csv(filepath)
-    return df
+    encodings = ["utf-8", "latin1", "cp1252", "ISO-8859-1"]
+
+    for encoding in encodings:
+        try:
+            df = pd.read_csv(filepath, encoding=encoding)
+            return df
+        except UnicodeDecodeError:
+            continue
+
+    raise ValueError("Unable to read CSV file. Unsupported encoding.")
 
 def clean_data(df):
     missing_before = df.isnull().sum().sum()

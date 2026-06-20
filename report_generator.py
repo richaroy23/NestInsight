@@ -2,6 +2,7 @@ import os
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet
 from docx import Document
+from datetime import datetime
 
 
 def _get_model_metric(model_result):
@@ -12,7 +13,8 @@ def _get_model_metric(model_result):
 def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insights):
     os.makedirs("outputs/reports", exist_ok=True)
     
-    pdf_path = "outputs/reports/report.pdf"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    pdf_path = f"outputs/reports/report_{timestamp}.pdf"
     doc = SimpleDocTemplate(pdf_path)
     styles = getSampleStyleSheet()
 
@@ -69,8 +71,8 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insight
 # Generate DOCX report
 def generate_docx(summary, stats, insights, model_result, chart_paths, ai_insights):
     os.makedirs("outputs/reports", exist_ok=True)
-    
-    docx_path = "outputs/reports/report.docx"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")    
+    docx_path = f"outputs/reports/report_{timestamp}.docx"
     doc = Document()
     #Title
     doc.add_heading("NestInsight Report", 0)

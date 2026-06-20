@@ -202,6 +202,9 @@ def history():
 #Map view
 @app.route("/map")
 def map_view():
+    if "user_id" not in session:
+        return redirect("/")
+
     return send_file("static/maps/map.html")
 
 #Logout

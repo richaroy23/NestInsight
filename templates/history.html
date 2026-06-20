@@ -19,6 +19,10 @@
 
         <aside class="upload-panel">
 
+            {% if error_message %}
+            <div class="error-banner">{{ error_message }}</div>
+            {% endif %}
+
             {% if reports %}
                 {% for report in reports %}
                 <div class="history-card">

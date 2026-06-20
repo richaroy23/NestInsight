@@ -47,6 +47,12 @@ def render_markdown_text(text):
 #Signup
 @app.route("/signup", methods=["POST"])
 def signup():
+    if supabase is None:
+        return render_template(
+            "auth.html",
+            error_message="Signup is unavailable right now: the database connection is not configured."
+        )
+
     try:
         email = request.form.get("email")
         password = request.form.get("password")
@@ -70,6 +76,12 @@ def signup():
 #Login
 @app.route("/login", methods=["POST"])
 def login():
+    if supabase is None:
+        return render_template(
+            "auth.html",
+            error_message="Login is unavailable right now: the database connection is not configured."
+        )
+
     try:
         email = request.form.get("email")
         password = request.form.get("password")
@@ -198,6 +210,13 @@ def history():
 
     if not user_id:
         return redirect("/")
+
+    if supabase is None:
+        return render_template(
+            "history.html",
+            reports=[],
+            error_message="History is unavailable right now: the database connection is not configured."
+        )
 
     reports = supabase.table("reports").select("*").eq("user_id", user_id).execute()
     return render_template("history.html", reports=reports.data)

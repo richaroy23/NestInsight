@@ -17,3 +17,17 @@ if (chartFilter) {
         });
     });
 }
+
+const columnSearch = document.getElementById("columnSearch");
+const columnTags = document.querySelectorAll(".columns-box span");
+
+if (columnSearch) {
+    columnSearch.addEventListener("input", () => {
+        const query = columnSearch.value.trim().toLowerCase();
+
+        columnTags.forEach(tag => {
+            const columnName = tag.textContent.trim().toLowerCase();
+            tag.style.display = columnName.includes(query) ? "" : "none";
+        });
+    });
+}

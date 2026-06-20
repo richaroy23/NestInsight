@@ -305,10 +305,14 @@ def _prepare_features(X):
     drop_cols = [
         "Transaction ID",
         "Customer ID",
-        "Transaction Date"
     ]
 
     X = X.drop(columns=drop_cols, errors="ignore")
+
+    # Convert datetime columns into numeric timestamps
+    for col in X.columns:
+        if pd.api.types.is_datetime64_any_dtype(X[col]):
+            X[col] = X[col].astype("int64") // 10**9
 
     columns_to_drop = []
 

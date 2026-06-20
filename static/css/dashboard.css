@@ -181,6 +181,31 @@ padding: 9px 14px;
 border-radius: 999px;
 }
 
+.filter-box {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 12px;
+}
+
+.filter-box input[type="text"],
+.filter-box select {
+padding: 12px 16px;
+border-radius: 14px;
+border: 1px solid rgba(148, 163, 184, 0.3);
+background: rgba(255, 255, 255, 0.92);
+color: #0f172a;
+font: inherit;
+outline: none;
+min-width: 220px;
+}
+
+.filter-box input[type="text"]:focus,
+.filter-box select:focus {
+border-color: var(--accent);
+box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
 .chart-grid {
 display: grid;
 grid-template-columns: repeat(2, 1fr);

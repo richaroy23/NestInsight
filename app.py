@@ -124,18 +124,18 @@ def upload():
     df = load_data(filepath)
 
     #Clean dataset
-    df, cleaned_path, cleaning_report = clean_data(df)
+    df, cleaned_path, cleaning_report = clean_data(df, upload_id)
     
     #Analysis
     summary = descriptive_analysis(df)
     stats = df.describe().to_dict()
-    chart_paths = generate_visuals(df)
-    forecast_chart = forecast_sales(df)
+    chart_paths = generate_visuals(df, upload_id)
+    forecast_chart = forecast_sales(df, upload_id)
     if forecast_chart:
         chart_paths["forecast"] = forecast_chart
-    map_file = generate_map(df)
+    map_file = generate_map(df, upload_id)
     target_column = request.form.get("target_column")
-    model_result = train_model(df, target_column=target_column)
+    model_result = train_model(df, target_column=target_column, upload_id=upload_id)
     basic_insights = business_insights(df)
     basic_insights.append(model_performance_insight(model_result))
     ai_insights = generate_ai_insights(summary, stats)
@@ -167,6 +167,9 @@ def upload():
         except Exception as supabase_error:
             print("SUPABASE ERROR:", supabase_error)
             
+
+    if map_file:
+        session["last_map_file"] = map_file
 
     #Render dashboard 
     return render_template(
@@ -205,7 +208,12 @@ def map_view():
     if "user_id" not in session:
         return redirect("/")
 
-    return send_file("static/maps/map.html")
+    map_path = session.get("last_map_file")
+
+    if not map_path or not os.path.exists(map_path):
+        return "No map available for this session.", 404
+
+    return send_file(map_path)
 
 #Logout
 @app.route("/logout")

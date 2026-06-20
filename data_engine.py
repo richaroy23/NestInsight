@@ -31,7 +31,7 @@ def load_data(filepath):
 
     raise ValueError("Unable to read CSV file. Unsupported encoding.")
 
-def clean_data(df):
+def clean_data(df, upload_id=None):
     missing_before = df.isnull().sum().sum()
     duplicates_before = df.duplicated().sum()
 
@@ -47,8 +47,10 @@ def clean_data(df):
         if not df[col].mode().empty:
             df[col] = df[col].fillna(df[col].mode()[0])
     
-    #Save cleaned data to a new CSV file
-    cleaned_path = "outputs/cleaned/cleaned.csv"
+    #Save cleaned data to a new CSV file, namespaced per upload so concurrent
+    #uploads don't overwrite each other's cleaned file
+    filename = f"{upload_id}_cleaned.csv" if upload_id else "cleaned.csv"
+    cleaned_path = f"outputs/cleaned/{filename}"
     df.to_csv(cleaned_path, index=False)
 
     cleaning_report = {
@@ -72,8 +74,9 @@ def statistical_analysis(df):
     stats = df.describe(include='all').fillna("N/A").to_dict()
     return stats
 
-def generate_visuals(df):
+def generate_visuals(df, upload_id=None):
     chart_paths = {}
+    prefix = f"{upload_id}_" if upload_id else ""
 
     numeric_cols = df.select_dtypes(include='number').columns
 
@@ -83,7 +86,7 @@ def generate_visuals(df):
     # Histogram
     plt.figure(figsize=(8, 6))
     df[numeric_cols[0]].hist()
-    histogram_path = "static/charts/histogram.png"
+    histogram_path = f"static/charts/{prefix}histogram.png"
     plt.savefig(histogram_path)
     plt.close()
     chart_paths["histogram"] = histogram_path
@@ -91,7 +94,7 @@ def generate_visuals(df):
     # Boxplot
     plt.figure(figsize=(8, 6))
     sns.boxplot(x=df[numeric_cols[0]])
-    boxplot_path = "static/charts/boxplot.png"
+    boxplot_path = f"static/charts/{prefix}boxplot.png"
     plt.savefig(boxplot_path)
     plt.close()
     chart_paths["boxplot"] = boxplot_path
@@ -103,7 +106,7 @@ def generate_visuals(df):
             x=df[numeric_cols[0]],
             y=df[numeric_cols[1]]
         )
-        scatter_path = "static/charts/scatter.png"
+        scatter_path = f"static/charts/{prefix}scatter.png"
         plt.savefig(scatter_path)
         plt.close()
         chart_paths["scatter"] = scatter_path
@@ -114,14 +117,14 @@ def generate_visuals(df):
     if not corr.empty:
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr, annot=True)
-        heatmap_path = "static/charts/heatmap.png"
+        heatmap_path = f"static/charts/{prefix}heatmap.png"
         plt.savefig(heatmap_path)
         plt.close()
         chart_paths["heatmap"] = heatmap_path
 
     return chart_paths
 
-def forecast_sales(df):
+def forecast_sales(df, upload_id=None):
     date_col = None
     sales_col = None
 
@@ -170,7 +173,7 @@ def forecast_sales(df):
 
     predictions = model.predict(future_days)
 
-    forecast_path = "static/charts/forecast.png"
+    forecast_path = f"static/charts/{upload_id}_forecast.png" if upload_id else "static/charts/forecast.png"
 
     plt.figure(figsize=(8, 6))
 
@@ -199,7 +202,7 @@ def forecast_sales(df):
 
     return forecast_path
 
-def generate_map(df):
+def generate_map(df, upload_id=None):
     if "Latitude" not in df.columns or "Longitude" not in df.columns:
         return None
 
@@ -213,7 +216,8 @@ def generate_map(df):
             [row["Latitude"], row["Longitude"]]
         ).add_to(map_obj)
 
-    map_path = "static/maps/map.html"
+    filename = f"{upload_id}_map.html" if upload_id else "map.html"
+    map_path = f"static/maps/{filename}"
     map_obj.save(map_path)
 
     return map_path
@@ -342,7 +346,7 @@ def _prepare_features(X):
     return X
 
 
-def train_model(df, target_column=None):
+def train_model(df, target_column=None, upload_id=None):
     try:
         # Check if dataset has enough columns
         if df.shape[1] < 2:
@@ -438,7 +442,8 @@ def train_model(df, target_column=None):
             display_score = round(score, 2)
 
         # Save model
-        model_path = "outputs/model.pkl"
+        filename = f"{upload_id}_model.pkl" if upload_id else "model.pkl"
+        model_path = f"outputs/{filename}"
 
         joblib.dump(model, model_path)
             

@@ -180,6 +180,13 @@
             </div>
             {% endif %}
 
+            {% if chart_paths.forecast %}
+            <div class="chart-card" data-chart="forecast">
+                <h3>Sales Forecast</h3>
+                <img src="{{ chart_paths.forecast }}">
+            </div>
+            {% endif %}
+
         </div>
     </div>
 

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 
+from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, mean_absolute_error
@@ -111,6 +112,49 @@ def generate_visuals(df):
 
     return chart_paths
 
+def forecast_sales(df):
+    if "Transaction Date" not in df.columns:
+        return None
+
+    if "Total" not in df.columns:
+        return None
+
+    df["Transaction Date"] = pd.to_datetime(df["Transaction Date"])
+    daily_sales = df.groupby("Transaction Date")["Total"].sum().reset_index()
+
+    daily_sales["day_num"] = range(len(daily_sales))
+
+    X = daily_sales[["day_num"]]
+    y = daily_sales["Total"]
+
+    model = LinearRegression()
+    model.fit(X, y)
+
+    future_days = pd.DataFrame({
+        "day_num": range(len(daily_sales), len(daily_sales) + 7)
+    })
+
+    predictions = model.predict(future_days)
+
+    forecast_path = "static/charts/forecast.png"
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(daily_sales["Transaction Date"], daily_sales["Total"], label="Actual")
+    plt.plot(
+        pd.date_range(
+            daily_sales["Transaction Date"].max(),
+            periods=7
+        ),
+        predictions,
+        label="Forecast"
+    )
+
+    plt.legend()
+    plt.savefig(forecast_path)
+    plt.close()
+
+    return forecast_path
+
 TARGET_KEYWORDS = [
     "target",
     "label",
@@ -126,6 +170,7 @@ TARGET_KEYWORDS = [
     "units",
     "value",
 ]
+
 
 
 def _select_target_column(df, target_column=None):

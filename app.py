@@ -130,6 +130,10 @@ def upload():
     summary = descriptive_analysis(df)
     stats = df.describe().to_dict()
     chart_paths = generate_visuals(df)
+    forecast_chart = forecast_sales(df)
+    if forecast_chart:
+        chart_paths["forecast"] = forecast_chart
+
     target_column = request.form.get("target_column")
     model_result = train_model(df, target_column=target_column)
     basic_insights = business_insights(df)

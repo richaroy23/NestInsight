@@ -177,7 +177,7 @@ def generate_map(df):
             [row["Latitude"], row["Longitude"]]
         ).add_to(map_obj)
 
-    map_path = "templates/map.html"
+    map_path = "static/map.html"
     map_obj.save(map_path)
 
     return map_path

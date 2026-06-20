@@ -199,9 +199,10 @@ def history():
     reports = supabase.table("reports").select("*").eq("user_id", user_id).execute()
     return render_template("history.html", reports=reports.data)
 
+#Map view
 @app.route("/map")
 def map_view():
-    return render_template("map.html")
+    return send_file("static/maps/map.html")
 
 #Logout
 @app.route("/logout")

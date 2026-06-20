@@ -124,6 +124,28 @@
         </div>
     </div>
 
+    <div class="section">
+        <h2>Dashboard Filters</h2>
+
+        <div class="filter-box">
+
+            <input
+                type="text"
+                id="columnSearch"
+                placeholder="Search column..."
+            >
+
+            <select id="chartFilter">
+                <option value="all">All Charts</option>
+                <option value="histogram">Histogram</option>
+                <option value="boxplot">Boxplot</option>
+                <option value="scatter">Scatterplot</option>
+                <option value="heatmap">Heatmap</option>
+            </select>
+
+        </div>
+    </div>
+
     <!-- Charts -->
     <div class="section">
         <h2>Visual Analytics</h2>
@@ -131,21 +153,21 @@
         <div class="chart-grid">
 
             {% if chart_paths.histogram %}
-            <div class="chart-card">
+            <div class="chart-card" data-chart="histogram">
                 <h3>Histogram</h3>
                 <img src="{{ chart_paths.histogram }}" alt="Histogram chart" title="Histogram chart">
             </div>
             {% endif %}
 
             {% if chart_paths.boxplot %}
-            <div class="chart-card">
+            <div class="chart-card" data-chart="boxplot">
                 <h3>Boxplot</h3>
                 <img src="{{ chart_paths.boxplot }}" alt="Boxplot chart" title="Boxplot chart">
             </div>
             {% endif %}
 
             {% if chart_paths.scatter %}
-            <div class="chart-card">
+            <div class="chart-card" data-chart="scatter">
                 <h3>Scatterplot</h3>
                 <img src="{{ chart_paths.scatter }}" alt="Scatterplot chart" title="Scatterplot chart">
             </div>
@@ -178,6 +200,6 @@
     </div>
 
 </div>
-
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 </html>

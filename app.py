@@ -28,15 +28,21 @@ def allowed_file(filename):
     return bool(filename) and filename.lower().endswith(".csv")
 
 
-def upload_to_supabase(local_path, bucket_folder, filename):
+def upload_to_supabase(local_path, bucket_folder, filename, download_name=None):
     if supabase is None or not local_path or not os.path.exists(local_path):
         return None
 
     with open(local_path, "rb") as f:
         supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}",f,{"upsert": "true", "content-type": "application/octet-stream"})
 
+    # The HTML `download` attribute on <a> tags is ignored by browsers for
+    # cross-origin URLs (which Supabase Storage URLs are), so it can't force
+    # a download on its own. Passing download here makes Supabase's server
+    # respond with a real Content-Disposition: attachment header instead,
+    # which works regardless of origin.
     public_url = supabase.storage.from_("nestinsight-files").get_public_url(
-        f"{bucket_folder}/{filename}"
+        f"{bucket_folder}/{filename}",
+        {"download": download_name or True}
     )
 
     return public_url
@@ -163,9 +169,9 @@ def upload():
 
     if supabase is not None:
         try:
-            cleaned_url = upload_to_supabase(cleaned_path, "cleaned", f"{upload_id}_cleaned.csv")
-            pdf_url = upload_to_supabase(pdf_path, "reports", f"{upload_id}.pdf")
-            docx_url = upload_to_supabase(docx_path, "reports", f"{upload_id}.docx")
+            cleaned_url = upload_to_supabase(cleaned_path, "cleaned", f"{upload_id}_cleaned.csv", download_name="cleaned_data.csv")
+            pdf_url = upload_to_supabase(pdf_path, "reports", f"{upload_id}.pdf", download_name="NestInsight_Report.pdf")
+            docx_url = upload_to_supabase(docx_path, "reports", f"{upload_id}.docx", download_name="NestInsight_Report.docx")
 
             supabase.table("reports").insert({
                 "user_id": session.get("user_id"),

@@ -1,31 +1,100 @@
 # NestInsight
 
-NestInsight is an AI-powered dataset intelligence platform that automates the complete analytics pipeline from raw CSV upload to business-ready reports.
+NestInsight is an AI-powered full-stack data analytics platform that automates the complete analytics pipeline from raw CSV upload to business-ready reports.
 
-It helps users clean data, generate visual insights, train machine learning models, and produce AI-generated business intelligence — all from a single upload.
+It enables users to upload datasets, clean them, perform exploratory analysis, generate machine learning predictions, visualize trends, forecast future performance, and extract AI-powered business intelligence — all in one workflow.
+
+---
+
+## Live Demo
+
+Deployed App: https://nestinsight.onrender.com
+
+GitHub Repository: https://github.com/richaroy23/NestInsight
 
 ---
 
 ## Features
 
-* User authentication (Signup/Login with Supabase Auth)
-* Upload CSV datasets securely
+### Core Analytics Features
+
+* CSV dataset upload
+* Dynamic target column selection
 * Automatic data cleaning
 * Missing value handling
 * Duplicate removal
-* Exploratory Data Analysis (EDA)
-* Statistical summaries
-* Automated chart generation
-* Machine learning model training
-* Target column selection
-* Business insights generation
-* AI-generated strategic insights using Groq LLM
-* PDF report generation
-* DOCX report generation
-* Cloud storage for reports using Supabase Storage
-* User-specific analysis history
-* Download cleaned datasets and reports
-* Session-based protected dashboard
+* Cleaned CSV export
+* Descriptive statistical analysis
+* Dataset summary generation
+* Data type inspection
+* Missing value report
+* Univariate analysis
+* Histogram generation
+* Boxplot generation
+* Bivariate analysis
+* Scatterplot generation
+* Correlation heatmap
+* Interactive dashboard
+* KPI cards
+* Dashboard chart filters
+* Business insights extraction
+* Automated numerical insights
+
+---
+
+### Bonus Features
+
+* Feature engineering
+* Price × Quantity derived feature
+* Time series forecasting (7-day sales prediction)
+* Geographic mapping using latitude/longitude
+* Automated PDF report generation
+* Automated DOCX report generation
+* Timestamped report generation
+
+---
+
+### Machine Learning Features
+
+* Automatic target column detection
+* Classification model training
+* Regression model training
+* Random Forest Classifier
+* Random Forest Regressor
+* Accuracy score evaluation
+* Mean Absolute Error evaluation
+* Model saving using Joblib
+
+---
+
+### AI Intelligence Features
+
+* AI-generated business insights
+* Trend detection
+* Risk analysis
+* Business recommendations
+* Strategic analysis using Groq LLM
+
+---
+
+### User Features
+
+* Secure authentication system
+* Signup/Login with Supabase Auth
+* Protected user sessions
+* Personal dashboard
+* Analysis history tracking
+* Download previous reports
+
+---
+
+### Cloud Features
+
+* Supabase storage integration
+* Cleaned dataset cloud upload
+* PDF report cloud storage
+* DOCX report cloud storage
+* User-specific report database
 
 ---
 
@@ -37,32 +106,81 @@ It helps users clean data, generate visual insights, train machine learning mode
 * Supabase (Auth + Database + Storage)
 * Groq API
 
+---
+
 ### Data Processing
 
 * Pandas
 * NumPy
+
+---
 
 ### Machine Learning
 
 * Scikit-learn
 * Joblib
 
+---
+
 ### Visualization
 
 * Matplotlib
 * Seaborn
+* Folium
+
+---
 
 ### Reports
 
 * ReportLab (PDF)
 * Python-docx (DOCX)
 
+---
+
 ### Frontend
 
-* HTML
-* CSS
+* HTML5
+* CSS3
 * JavaScript
 
+---
+
+### Deployment
+
+* Render
+* Gunicorn
+
+---
+
+## Workflow
+
+```text
+Authentication
+↓
+Upload CSV Dataset
+↓
+Select Target Column
+↓
+Data Cleaning
+↓
+Statistical Analysis
+↓
+Visual Analytics
+↓
+Forecasting
+↓
+Geographic Mapping
+↓
+Machine Learning Training
+↓
+AI Business Intelligence
+↓
+Generate Reports
+↓
+Store Reports in Cloud
+↓
+Save to History
+```
 
 ---
 
@@ -77,34 +195,49 @@ NestInsight/
 │── supabase_client.py
 │── requirements.txt
 │── render.yaml
-│── .gitignore
-│── templates/
+│── README.md
+│
+├── templates/
 │   ├── auth.html
 │   ├── index.html
 │   ├── dashboard.html
-│   └── history.html
-│── static/
+│   ├── history.html
+│   └── map.html
+│
+├── static/
 │   ├── css/
+│   │   ├── style.css
+│   │   └── dashboard.css
+│   │
+│   ├── js/
+│   │   └── dashboard.js
+│   │
 │   └── charts/
-│── uploads/
-│── outputs/
+│
+├── uploads/
+│
+└── outputs/
+    ├── cleaned/
+    └── reports/
 ```
 
 ---
 
-## Setup (Local)
+## Installation
 
-### 1. Clone the repository
+### Clone repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/richaroy23/NestInsight.git
 cd NestInsight
 ```
 
-### 2. Create virtual environment
+---
+
+### Create virtual environment
 
 ```bash
-python -m venv .venv
+python -m venv venv
 ```
 
 Activate:
@@ -112,18 +245,18 @@ Activate:
 Windows:
 
 ```bash
-.venv\Scripts\activate
+venv\Scripts\activate
 ```
 
-Mac/Linux:
+Linux/Mac:
 
 ```bash
-source .venv/bin/activate
+source venv/bin/activate
 ```
 
 ---
 
-### 3. Install dependencies
+### Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -131,9 +264,7 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Create `.env`
-
-Create a `.env` file in root:
+### Create `.env`
 
 ```env
 SUPABASE_URL=your_supabase_url
@@ -145,13 +276,13 @@ GROQ_MODEL=llama-3.1-8b-instant
 
 ---
 
-### 5. Run the application
+### Run locally
 
 ```bash
 python app.py
 ```
 
-Runs at:
+Runs on:
 
 ```text
 http://127.0.0.1:5000
@@ -161,19 +292,12 @@ http://127.0.0.1:5000
 
 ## Deployment
 
-This project is production-ready for deployment using:
+NestInsight is production-ready and deployed using:
 
 * Render (Flask hosting)
 * Supabase (Database/Auth/Storage)
 
-### Render deployment steps:
-
-1. Push code to GitHub
-2. Connect repository to Render
-3. Add environment variables
-4. Deploy
-
-Start command:
+Deployment command:
 
 ```bash
 gunicorn app:app
@@ -181,33 +305,16 @@ gunicorn app:app
 
 ---
 
-## Authentication Flow
-
-```text
-Auth Page
-↓
-Login / Signup
-↓
-Dashboard
-↓
-Upload CSV
-↓
-Analysis Dashboard
-↓
-History Page
-↓
-Logout
-```
-
----
-
 ## Future Improvements
 
-* Background job queue for large datasets
-* Better model selection
-* More advanced visualizations
-* Dataset versioning
+* Advanced forecasting models (Prophet, ARIMA)
+* Advanced charts (Sankey, Sunburst)
+* A/B testing preparation
+* Data lake integrations
 * Team collaboration
-* Export to Excel
-* Advanced forecasting models
+* Excel export
+* Background job queues
+* Real-time dashboard updates
 
+---
+For ReadyNest Internship Week 1

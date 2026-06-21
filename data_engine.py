@@ -1,5 +1,4 @@
 import os
-import json
 
 import pandas as pd
 
@@ -18,6 +17,11 @@ from sklearn.metrics import accuracy_score, mean_absolute_error
 
 os.makedirs("static/charts", exist_ok=True)
 os.makedirs("static/maps", exist_ok=True)
+
+try:
+    from supabase_client import supabase
+except Exception:
+    supabase = None
 
 #Load dataset
 def load_data(filepath):
@@ -198,26 +202,39 @@ def forecast_sales(df, upload_id=None, date_col=None, sales_col=None):
 
     return forecast_path
 
-_GEOCODE_CACHE_PATH = "outputs/geocode_cache.json"
-
-
-def _load_geocode_cache():
-    if os.path.exists(_GEOCODE_CACHE_PATH):
-        try:
-            with open(_GEOCODE_CACHE_PATH) as f:
-                return json.load(f)
-        except (json.JSONDecodeError, OSError):
-            return {}
-    return {}
-
-
-def _save_geocode_cache(cache):
+def _load_geocode_cache(keys):
+    """
+    Fetch only the cache rows relevant to this batch of locations from the
+    'geocache' Supabase table — no point downloading the whole table when
+    we usually only need a handful of rows.
+    """
+    if supabase is None or not keys:
+        return {}
     try:
-        os.makedirs("outputs", exist_ok=True)
-        with open(_GEOCODE_CACHE_PATH, "w") as f:
-            json.dump(cache, f)
-    except OSError:
-        pass  # Cache is a best-effort optimization, not critical path
+        response = (
+            supabase.table("geocache")
+            .select("location_name, lat, lon")
+            .in_("location_name", keys)
+            .execute()
+        )
+        return {row["location_name"]: (row["lat"], row["lon"]) for row in response.data}
+    except Exception as e:
+        print("GEOCACHE READ ERROR:", e)
+        return {}
+
+
+def _save_geocode_entries(entries):
+    """
+    Upsert newly-resolved locations in one batch call so future uploads
+    (even after a redeploy) can reuse them instead of hitting Nominatim again.
+    entries: list of {"location_name": str, "lat": float, "lon": float}
+    """
+    if supabase is None or not entries:
+        return
+    try:
+        supabase.table("geocache").upsert(entries, on_conflict="location_name").execute()
+    except Exception as e:
+        print("GEOCACHE WRITE ERROR:", e)
 
 
 def _geocode_locations(location_values):
@@ -226,26 +243,33 @@ def _geocode_locations(location_values):
     Returns a dict of {location_string: (lat, lon)} for successful lookups.
     Geocodes unique values only to avoid redundant API calls and rate limiting.
 
-    Results are cached to disk (outputs/geocode_cache.json) across requests,
-    since the same city/state/country strings show up repeatedly across
-    different uploads. This keeps Nominatim calls — and the 1s/request rate
-    limit they require — off the hot path for anything already looked up,
-    which matters a lot under a Gunicorn worker timeout.
+    Results are cached in Supabase (table: geocache) rather than local disk,
+    so the same city/state/country strings looked up in past uploads don't
+    hit Nominatim again — and unlike Render's free-tier disk, this cache
+    survives redeploys and worker restarts.
     """
     from geopy.geocoders import Nominatim
     from geopy.exc import GeocoderTimedOut, GeocoderServiceError
     import time
 
-    cache = _load_geocode_cache()
-    cache_dirty = False
-    geolocator = None  # only created if we actually need a network lookup
-
+    # De-duplicate while preserving order
+    cleaned_keys = []
+    seen = set()
     for value in location_values:
         if not value or str(value).strip() == "":
             continue
         key = str(value).strip()
+        if key not in seen:
+            seen.add(key)
+            cleaned_keys.append(key)
+
+    cache = _load_geocode_cache(cleaned_keys)
+    new_entries = []
+    geolocator = None  # only created if we actually need a network lookup
+
+    for key in cleaned_keys:
         if key in cache:
-            continue  # already resolved on a previous request
+            continue  # already resolved, from Supabase or earlier in this loop
 
         if geolocator is None:
             geolocator = Nominatim(user_agent="nestinsight_mapper")
@@ -254,20 +278,19 @@ def _geocode_locations(location_values):
             loc = geolocator.geocode(key, timeout=5)
             if loc:
                 cache[key] = (loc.latitude, loc.longitude)
-                cache_dirty = True
+                new_entries.append({
+                    "location_name": key,
+                    "lat": loc.latitude,
+                    "lon": loc.longitude
+                })
             time.sleep(1)  # Nominatim usage policy: max 1 request per second
         except (GeocoderTimedOut, GeocoderServiceError):
             continue  # Skip locations that fail — don't crash the whole map
 
-    if cache_dirty:
-        _save_geocode_cache(cache)
+    if new_entries:
+        _save_geocode_entries(new_entries)
 
-    # Only return entries relevant to this call, as plain (lat, lon) tuples
-    return {
-        str(v).strip(): tuple(cache[str(v).strip()])
-        for v in location_values
-        if v and str(v).strip() in cache
-    }
+    return cache
 
 
 def generate_map(df, upload_id=None, location_col=None):

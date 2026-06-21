@@ -299,8 +299,19 @@ def history():
             error_message="History is unavailable right now: the database connection is not configured."
         )
 
-    reports = supabase.table("reports").select("*").eq("user_id", user_id).execute()
-    return render_template("history.html", reports=reports.data)
+    print("CURRENT SESSION USER:", user_id)
+
+    reports = supabase.table("reports").select("*").eq(
+        "user_id",
+        user_id
+    ).execute()
+
+    print("MATCHING REPORTS:", reports.data)
+
+    return render_template(
+        "history.html",
+        reports=reports.data
+    )
 
 #Map view
 @app.route("/map")

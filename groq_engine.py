@@ -39,6 +39,8 @@ def generate_ai_insights(summary, stats):
         {stats}
 
         Generate:
+
+        Do not include any code blocks or markdown formatting in your response. Only provide plain text.
         1. Key business insights
         2. Risks or anomalies
         3. Recommendations

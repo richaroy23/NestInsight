@@ -63,13 +63,62 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insight
         elements.append(Paragraph(_pdf_text(value), styles['BodyText']))
     elements.append(Spacer(1, 10))
 
-    #Insights
+    # Business Insights
     elements.append(Paragraph("Business Insights:", styles['Heading2']))
+
     for insight in insights:
-        elements.append(Paragraph(_pdf_text(insight), styles['BodyText']))
+        elements.append(
+            Paragraph(
+                _pdf_text(f"• {insight}"),
+                styles['BodyText']
+            )
+        )
+
     elements.append(Spacer(1, 20))
-    elements.append(Paragraph("AI Business Intelligence:", styles['Heading2']))
-    elements.append(Paragraph(_pdf_text(ai_insights), styles['BodyText']))
+
+    # AI Business Intelligence
+    elements.append(
+        Paragraph(
+            "AI Business Intelligence:",
+            styles['Heading2']
+        )
+    )
+
+    # Split AI insights line by line for clean formatting
+    for line in ai_insights.split("\n"):
+        line = line.strip()
+
+        if not line:
+            continue
+
+        # Section headings
+        if line.endswith(":"):
+            elements.append(
+                Paragraph(
+                    _pdf_text(line),
+                    styles['Heading3']
+                )
+            )
+
+        # Bullet points
+        elif line.startswith("-"):
+            elements.append(
+                Paragraph(
+                    _pdf_text(f"• {line[1:].strip()}"),
+                    styles['BodyText']
+                )
+            )
+
+        # Normal text fallback
+        else:
+            elements.append(
+                Paragraph(
+                    _pdf_text(line),
+                    styles['BodyText']
+                )
+            )
+
+    elements.append(Spacer(1, 20))
 
     #Model Results
     elements.append(Paragraph("Model Results:", styles['Heading2']))

@@ -180,7 +180,7 @@ Your dataset should contain:
 | Feature | Required Columns |
 |---|---|
 | Sales Forecasting | `Transaction Date`, `Total` |
-| Geographic Mapping | `Latitude`, `Longitude` |
+| Geographic Mapping | Any city, state, or country column (or `Latitude` + `Longitude`) |
 | Feature Engineering | `Price Per Unit`, `Quantity` |
 | Automatic Target Detection | Columns like `sales`, `revenue`, `profit`, `target`, `label`, `class` |
 
@@ -195,14 +195,6 @@ For best results:
 * Avoid duplicate rows
 * Use numeric values where possible for analysis
 * Use proper date formatting for time-based forecasting
-
-Example:
-
-```csv
-Transaction Date,Product,Quantity,Price Per Unit,Total,Latitude,Longitude
-2026-06-01,Laptop,2,45000,90000,26.1445,91.7362
-2026-06-02,Phone,5,15000,75000,26.1821,91.7458
-```
 
 ---
 
@@ -423,6 +415,8 @@ NestInsight is deployed using Render and Supabase. Before deployment, make sure 
 gunicorn app:app
 ```
 ---
+
+
 
 ## Future Improvements
 

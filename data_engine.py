@@ -232,8 +232,8 @@ def generate_map(df, upload_id=None, location_col=None):
     if location_col and location_col in df.columns:
         unique_locations = df[location_col].dropna().unique().tolist()
 
-        # Cap at 50 unique locations to keep geocoding time reasonable
-        unique_locations = unique_locations[:50]
+        # Cap at 40 unique locations to keep geocoding time reasonable
+        unique_locations = unique_locations[:40]
 
         geo_cache = _geocode_locations(unique_locations)
 

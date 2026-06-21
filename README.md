@@ -376,6 +376,7 @@ Create:
 ```text
 nestinsight-files
 ```
+The bucket can be left **private** — the app uses signed URLs (7-day expiry) so download links work without making the bucket publicly accessible.
 
 #### Database Table
 

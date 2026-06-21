@@ -44,19 +44,26 @@ def upload_to_supabase(local_path, bucket_folder, filename, download_name=None):
         return None
 
     with open(local_path, "rb") as f:
-        supabase.storage.from_("nestinsight-files").upload(f"{bucket_folder}/{filename}",f,{"upsert": "true", "content-type": "application/octet-stream"})
+        supabase.storage.from_("nestinsight-files").upload(
+            f"{bucket_folder}/{filename}",
+            f,
+            {"upsert": "true", "content-type": "application/octet-stream"}
+        )
 
-    # The HTML `download` attribute on <a> tags is ignored by browsers for
-    # cross-origin URLs (which Supabase Storage URLs are), so it can't force
-    # a download on its own. Passing download here makes Supabase's server
-    # respond with a real Content-Disposition: attachment header instead,
-    # which works regardless of origin.
-    public_url = supabase.storage.from_("nestinsight-files").get_public_url(
+    # Signed URLs work whether the bucket is public or private.
+    # 604800 seconds = 7 days, long enough for a reviewer to download reports
+    # without the link expiring mid-session.
+    signed = supabase.storage.from_("nestinsight-files").create_signed_url(
         f"{bucket_folder}/{filename}",
+        604800,
         {"download": download_name or True}
     )
 
-    return public_url
+    # The supabase-py client returns either a dict with a "signedURL" key
+    # or an object with a signedURL attribute depending on the version.
+    if isinstance(signed, dict):
+        return signed.get("signedURL") or signed.get("signedUrl")
+    return getattr(signed, "signed_url", None) or getattr(signed, "signedURL", None)
 
 def render_markdown_text(text):
     return Markup(markdown.markdown(text or "", extensions=["extra", "sane_lists"]))

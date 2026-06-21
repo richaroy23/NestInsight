@@ -1,4 +1,5 @@
 import os
+import json
 
 import pandas as pd
 
@@ -197,34 +198,76 @@ def forecast_sales(df, upload_id=None, date_col=None, sales_col=None):
 
     return forecast_path
 
+_GEOCODE_CACHE_PATH = "outputs/geocode_cache.json"
+
+
+def _load_geocode_cache():
+    if os.path.exists(_GEOCODE_CACHE_PATH):
+        try:
+            with open(_GEOCODE_CACHE_PATH) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _save_geocode_cache(cache):
+    try:
+        os.makedirs("outputs", exist_ok=True)
+        with open(_GEOCODE_CACHE_PATH, "w") as f:
+            json.dump(cache, f)
+    except OSError:
+        pass  # Cache is a best-effort optimization, not critical path
+
+
 def _geocode_locations(location_values):
     """
     Geocode a list of unique location strings.
     Returns a dict of {location_string: (lat, lon)} for successful lookups.
     Geocodes unique values only to avoid redundant API calls and rate limiting.
+
+    Results are cached to disk (outputs/geocode_cache.json) across requests,
+    since the same city/state/country strings show up repeatedly across
+    different uploads. This keeps Nominatim calls — and the 1s/request rate
+    limit they require — off the hot path for anything already looked up,
+    which matters a lot under a Gunicorn worker timeout.
     """
     from geopy.geocoders import Nominatim
     from geopy.exc import GeocoderTimedOut, GeocoderServiceError
     import time
 
-    geolocator = Nominatim(user_agent="nestinsight_mapper")
-    cache = {}
+    cache = _load_geocode_cache()
+    cache_dirty = False
+    geolocator = None  # only created if we actually need a network lookup
 
     for value in location_values:
         if not value or str(value).strip() == "":
             continue
         key = str(value).strip()
         if key in cache:
-            continue
+            continue  # already resolved on a previous request
+
+        if geolocator is None:
+            geolocator = Nominatim(user_agent="nestinsight_mapper")
+
         try:
             loc = geolocator.geocode(key, timeout=5)
             if loc:
                 cache[key] = (loc.latitude, loc.longitude)
-            time.sleep(1)  # Nominatim rate limit: 1 request per second
+                cache_dirty = True
+            time.sleep(1)  # Nominatim usage policy: max 1 request per second
         except (GeocoderTimedOut, GeocoderServiceError):
             continue  # Skip locations that fail — don't crash the whole map
 
-    return cache
+    if cache_dirty:
+        _save_geocode_cache(cache)
+
+    # Only return entries relevant to this call, as plain (lat, lon) tuples
+    return {
+        str(v).strip(): tuple(cache[str(v).strip()])
+        for v in location_values
+        if v and str(v).strip() in cache
+    }
 
 
 def generate_map(df, upload_id=None, location_col=None):
@@ -232,8 +275,13 @@ def generate_map(df, upload_id=None, location_col=None):
     if location_col and location_col in df.columns:
         unique_locations = df[location_col].dropna().unique().tolist()
 
-        # Cap at 40 unique locations to keep geocoding time reasonable
-        unique_locations = unique_locations[:40]
+        # Cap at 20 unique locations to keep geocoding time reasonable.
+        # Each *uncached* location costs ~1-2s (Nominatim lookup + the
+        # mandatory 1s rate-limit sleep), so this keeps a cold-cache worst
+        # case well under the Gunicorn worker timeout. Cached locations
+        # (see _geocode_locations) are essentially free, so repeat uploads
+        # with familiar place names resolve far faster than this cap implies.
+        unique_locations = unique_locations[:20]
 
         geo_cache = _geocode_locations(unique_locations)
 

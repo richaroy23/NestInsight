@@ -124,25 +124,20 @@ def generate_visuals(df, upload_id=None):
 
     return chart_paths
 
-def forecast_sales(df, upload_id=None):
-    date_col = None
-    sales_col = None
+def forecast_sales(df, upload_id=None, date_col=None, sales_col=None):
+    # Use user-provided columns if given; otherwise attempt keyword detection
+    # as a fallback so the function still works without user input
+    if not date_col:
+        for col in df.columns:
+            if "date" in col.lower():
+                date_col = col
+                break
 
-    #Auto-detect date and sales columns
-    for col in df.columns:
-        col_lower = col.lower()
-
-        if "date" in col.lower():
-            date_col = col
-
-        if (
-            "sales" in col.lower()
-            or "total" in col.lower()
-            or "amount" in col.lower()
-            or "revenue" in col.lower()
-            or "profit" in col.lower()
-        ):
-            sales_col = col
+    if not sales_col:
+        for col in df.columns:
+            if any(k in col.lower() for k in ("sales", "total", "amount", "revenue", "profit")):
+                sales_col = col
+                break
 
     #Skip if not found
     if not date_col or not sales_col:
@@ -463,25 +458,26 @@ def train_model(df, target_column=None, upload_id=None):
             "message": str(e)
         }
 
-def business_insights(df):
-    insights = []
+def business_insights(df, insight_columns=None):
+    numeric_cols = list(df.select_dtypes(include="number").columns)
 
-    for col in df.select_dtypes(include='number').columns:
+    if not numeric_cols:
+        return ["No numeric columns found for business insight extraction."]
+
+    # Use user-selected columns if provided and valid, otherwise fall back
+    # to the first two numeric columns so the function always returns something
+    if insight_columns:
+        selected = [c for c in insight_columns if c in numeric_cols][:2]
+    else:
+        selected = numeric_cols[:2]
+
+    insights = []
+    for col in selected:
         avg_value = round(df[col].mean(), 2)
         max_value = round(df[col].max(), 2)
         min_value = round(df[col].min(), 2)
-
-        insights.append(
-            f"The average value of {col} is {avg_value}"
-        )
-
-        insights.append(
-            f"The highest recorded value in {col} is {max_value}"
-        )
-
-        insights.append(
-            f"The lowest recorded value in {col} is {min_value}"
-        )
+        insights.append(f"The average {col} is {avg_value}")
+        insights.append(f"The highest recorded {col} is {max_value}, and the lowest is {min_value}")
 
     return insights
 

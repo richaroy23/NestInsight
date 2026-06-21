@@ -197,25 +197,88 @@ def forecast_sales(df, upload_id=None, date_col=None, sales_col=None):
 
     return forecast_path
 
-def generate_map(df, upload_id=None):
-    if "Latitude" not in df.columns or "Longitude" not in df.columns:
-        return None
+def _geocode_locations(location_values):
+    """
+    Geocode a list of unique location strings.
+    Returns a dict of {location_string: (lat, lon)} for successful lookups.
+    Geocodes unique values only to avoid redundant API calls and rate limiting.
+    """
+    from geopy.geocoders import Nominatim
+    from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+    import time
 
-    map_obj = folium.Map(
-        location=[df["Latitude"].mean(), df["Longitude"].mean()],
-        zoom_start=5
-    )
+    geolocator = Nominatim(user_agent="nestinsight_mapper")
+    cache = {}
 
-    for _, row in df.iterrows():
-        folium.Marker(
-            [row["Latitude"], row["Longitude"]]
-        ).add_to(map_obj)
+    for value in location_values:
+        if not value or str(value).strip() == "":
+            continue
+        key = str(value).strip()
+        if key in cache:
+            continue
+        try:
+            loc = geolocator.geocode(key, timeout=5)
+            if loc:
+                cache[key] = (loc.latitude, loc.longitude)
+            time.sleep(1)  # Nominatim rate limit: 1 request per second
+        except (GeocoderTimedOut, GeocoderServiceError):
+            continue  # Skip locations that fail — don't crash the whole map
 
-    filename = f"{upload_id}_map.html" if upload_id else "map.html"
-    map_path = f"static/maps/{filename}"
-    map_obj.save(map_path)
+    return cache
 
-    return map_path
+
+def generate_map(df, upload_id=None, location_col=None):
+    # --- Path 1: user selected a text location column ---
+    if location_col and location_col in df.columns:
+        unique_locations = df[location_col].dropna().unique().tolist()
+
+        # Cap at 50 unique locations to keep geocoding time reasonable
+        unique_locations = unique_locations[:50]
+
+        geo_cache = _geocode_locations(unique_locations)
+
+        if not geo_cache:
+            return None  # No locations resolved — skip map silently
+
+        # Build coordinate rows from the cache
+        coords = []
+        for _, row in df.iterrows():
+            key = str(row[location_col]).strip()
+            if key in geo_cache:
+                lat, lon = geo_cache[key]
+                coords.append((lat, lon, key))
+
+        if not coords:
+            return None
+
+        avg_lat = sum(c[0] for c in coords) / len(coords)
+        avg_lon = sum(c[1] for c in coords) / len(coords)
+
+        map_obj = folium.Map(location=[avg_lat, avg_lon], zoom_start=4)
+        for lat, lon, label in coords:
+            folium.Marker([lat, lon], tooltip=label).add_to(map_obj)
+
+        filename = f"{upload_id}_map.html" if upload_id else "map.html"
+        map_path = f"static/maps/{filename}"
+        map_obj.save(map_path)
+        return map_path
+
+    # --- Path 2: fallback — dataset already has Latitude/Longitude columns ---
+    if "Latitude" in df.columns and "Longitude" in df.columns:
+        map_obj = folium.Map(
+            location=[df["Latitude"].mean(), df["Longitude"].mean()],
+            zoom_start=5
+        )
+        for _, row in df.iterrows():
+            folium.Marker([row["Latitude"], row["Longitude"]]).add_to(map_obj)
+
+        filename = f"{upload_id}_map.html" if upload_id else "map.html"
+        map_path = f"static/maps/{filename}"
+        map_obj.save(map_path)
+        return map_path
+
+    # --- Path 3: no usable location data ---
+    return None
 
 TARGET_KEYWORDS = [
     "target",

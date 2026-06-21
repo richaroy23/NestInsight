@@ -166,21 +166,26 @@ def upload():
     summary = descriptive_analysis(df)
     stats = df.describe().to_dict()
     chart_paths = generate_visuals(df, upload_id)
-    forecast_chart = forecast_sales(df, upload_id, date_col=date_column, sales_col=value_column)
-    if forecast_chart:
-        chart_paths["forecast"] = forecast_chart
-    location_column = request.form.get("location_column") or None
-    map_file = generate_map(df, upload_id, location_col=location_column)
+
+    # Read all user selections from the form before calling any functions
     target_column = request.form.get("target_column")
     insight_columns = request.form.getlist("insight_columns")
     date_column = request.form.get("date_column") or None
     value_column = request.form.get("value_column") or None
+    location_column = request.form.get("location_column") or None
+
+    forecast_chart = forecast_sales(df, upload_id, date_col=date_column, sales_col=value_column)
+    if forecast_chart:
+        chart_paths["forecast"] = forecast_chart
+    map_file = generate_map(df, upload_id, location_col=location_column)
 
     model_result = train_model(df, target_column=target_column, upload_id=upload_id)
     basic_insights = business_insights(df, insight_columns=insight_columns)
     basic_insights.append(model_performance_insight(model_result))
     ai_insights = generate_ai_insights(summary, stats)
-    ai_insights_html = render_markdown_text(ai_insights)
+    # ai_insights_html is intentionally not rendered here —
+    # it is computed from ai_insights in the GET /results/<upload_id> route
+    # so that the dashboard page can be re-rendered on refresh without issues.
 
     #Generate reports
     pdf_path = generate_pdf(summary, stats, basic_insights, model_result, chart_paths, ai_insights)

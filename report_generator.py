@@ -47,7 +47,7 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insight
     #Model Results
     elements.append(Paragraph("Model Results:", styles['Heading2']))
     
-    if model_result["status"] == "success":
+    if model_result.get("status") == "success":
         metric_name, metric_value = _get_model_metric(model_result)
         suffix = "%" if metric_name == "Accuracy" else ""
         elements.append(Paragraph(f"{metric_name}: {metric_value}{suffix}", styles['BodyText']))
@@ -97,7 +97,7 @@ def generate_docx(summary, stats, insights, model_result, chart_paths, ai_insigh
     #Model Results
     doc.add_heading("Model Results:", level=1)
 
-    if model_result["status"] == "success":
+    if model_result.get("status") == "success":
         metric_name, metric_value = _get_model_metric(model_result)
         suffix = "%" if metric_name == "Accuracy" else ""
         doc.add_paragraph(f"{metric_name}: {metric_value}{suffix}")

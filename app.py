@@ -17,7 +17,17 @@ except Exception:
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv("SECRET_KEY", "supersecret")
+app.secret_key = os.getenv("SECRET_KEY")
+if not _secret_key:
+    import warnings
+    warnings.warn(
+        "SECRET_KEY env var is not set — falling back to an insecure default. "
+        "Set SECRET_KEY in your Render environment variables before going live.",
+        stacklevel=2
+    )
+    _secret_key = "supersecret"
+app.secret_key = _secret_key
+
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
 
 os.makedirs("uploads", exist_ok=True)

@@ -1,13 +1,10 @@
 :root {
-    --bg: #0f172a;
-    --bg-soft: #111c36;
     --card: rgba(255, 255, 255, 0.92);
     --card-border: rgba(148, 163, 184, 0.22);
     --text: #e2e8f0;
     --text-muted: #94a3b8;
     --accent: #22c55e;
     --accent-2: #38bdf8;
-    --accent-dark: #16a34a;
     --shadow: 0 24px 60px rgba(15, 23, 42, 0.26);
 }
 
@@ -143,20 +140,17 @@ h3 {
     line-height: 1.5;
 }
 
-.upload-panel,
-.quick-guide {
+.upload-panel {
     padding: 22px;
 }
 
 .upload-panel h2,
-.quick-guide h2,
 .section h2 {
     margin: 0 0 10px;
     color: #0f172a;
 }
 
-.upload-panel p,
-.quick-guide p {
+.upload-panel p {
     margin: 0 0 14px;
     color: #475569;
     line-height: 1.6;
@@ -354,13 +348,6 @@ button:active {
     margin-top: 18px;
 }
 
-.ghost-note {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #475569;
-    font-size: 0.92rem;
-}
 
 @media (max-width: 900px) {
     .hero-card {

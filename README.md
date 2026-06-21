@@ -383,6 +383,22 @@ create table reports (
     pdf_url text,
     docx_url text
 );
+
+alter table reports enable row level security;
+```
+
+No policies are needed on `reports` — the app only ever accesses it through the Supabase service role key (server-side), which bypasses RLS. Enabling it just blocks anonymous/public access via Supabase's auto-generated REST API.
+
+Also create a `geocache` table. This caches Nominatim geocoding lookups (used by the Geographic Mapping feature) so the same city/state/country strings aren't re-looked-up on every upload — important since Nominatim's usage policy caps requests at 1/second, and re-geocoding common locations on every request risks hitting the Gunicorn worker timeout.
+
+```sql
+create table geocache (
+    location_name text primary key,
+    lat double precision not null,
+    lon double precision not null
+);
+
+alter table geocache enable row level security;
 ```
 
 ---

@@ -53,6 +53,13 @@
                     </select>
                 </div>
 
+                <div class="upload-box" id="location_box" style="display:none;">
+                    <label for="location_column">Map column <small>(optional — city, state, or country column)</small></label>
+                    <select id="location_column" name="location_column" disabled>
+                        <option value="">No map</option>
+                    </select>
+                </div>
+
                 <button type="submit">Analyze Dataset</button>
             </form>
 
@@ -106,6 +113,14 @@ fileInput.addEventListener('change', () => {
         populateSelect(dateSelect, columns, 'No forecast (skip)');
         populateSelect(valueSelect, columns, 'No forecast (skip)');
         document.getElementById('forecast_box').style.display = '';
+
+        // Location column for map
+        populateSelect(
+            document.getElementById('location_column'),
+            columns,
+            'No map (skip)'
+        );
+        document.getElementById('location_box').style.display = '';
     };
 
     reader.readAsText(file);

@@ -9,4 +9,5 @@ uploads/
 .vscode/ 
 .venv/
 static/charts/
+static/maps/
 test_supabase.py

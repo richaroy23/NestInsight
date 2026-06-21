@@ -30,6 +30,20 @@ app.secret_key = _secret_key
 
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
 
+# Render's free tier has a fraction of a CPU and a hard 180s Gunicorn worker
+# timeout, but the /upload pipeline does a lot in one request (cleaning,
+# stats, charts, forecasting, geocoding, model training, AI insights, report
+# generation, cloud uploads). Past a certain row count that whole chain no
+# longer fits in the timeout window — better to reject early with a clear
+# message than let the worker grind for two minutes and die with a 500.
+MAX_ROWS = int(os.getenv("MAX_ROWS", "20000"))
+
+# Lets you disable map/geocoding generation from Render's dashboard (set
+# ENABLE_MAP=0 and redeploy) without touching code — useful for isolating
+# whether it's contributing to worker timeouts independently of the other
+# pipeline steps.
+ENABLE_MAP = os.getenv("ENABLE_MAP", "1") == "1"
+
 os.makedirs("uploads", exist_ok=True)
 os.makedirs("outputs/cleaned", exist_ok=True)
 os.makedirs("outputs/reports", exist_ok=True)
@@ -159,6 +173,18 @@ def upload():
     #Load dataset
     df = load_data(filepath)
 
+    if df.shape[0] > MAX_ROWS:
+        os.remove(filepath)
+        return render_template(
+            "index.html",
+            error_message=(
+                f"This file has {df.shape[0]:,} rows, which is more than the "
+                f"{MAX_ROWS:,}-row limit NestInsight can reliably process on "
+                "this hosting tier before timing out. Please upload a smaller "
+                "sample and try again."
+            ),
+        ), 400
+
     #Clean dataset
     df, cleaned_path, cleaning_report = clean_data(df, upload_id)
     
@@ -177,7 +203,7 @@ def upload():
     forecast_chart = forecast_sales(df, upload_id, date_col=date_column, sales_col=value_column)
     if forecast_chart:
         chart_paths["forecast"] = forecast_chart
-    map_file = generate_map(df, upload_id, location_col=location_column)
+    map_file = generate_map(df, upload_id, location_col=location_column) if ENABLE_MAP else None
 
     model_result = train_model(df, target_column=target_column, upload_id=upload_id)
     basic_insights = business_insights(df, insight_columns=insight_columns)

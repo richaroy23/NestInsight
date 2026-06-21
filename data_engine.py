@@ -549,21 +549,28 @@ def train_model(df, target_column=None, upload_id=None):
         )
 
         # Train model
+        # n_jobs intentionally left as the scikit-learn default (1, i.e. no
+        # extra worker processes) rather than -1. Containerized hosts like
+        # Render's free tier report the *host* machine's CPU count via
+        # os.cpu_count(), not the small fractional CPU slice the container
+        # is actually allotted — so n_jobs=-1 spawns a joblib process pool
+        # sized for many cores on an instance that effectively has much
+        # less than one, which costs more in process-spawn overhead and
+        # memory than it could ever save in parallel tree-building, and can
+        # hang long enough to trip the Gunicorn worker timeout.
         if is_classification:
             model = RandomForestClassifier(
                 n_estimators=50,
                 max_depth=12,
                 min_samples_leaf=2,
-                random_state=42,
-                n_jobs=-1
+                random_state=42
             )
         else:
             model = RandomForestRegressor(
                 n_estimators=50,
                 max_depth=12,
                 min_samples_leaf=2,
-                random_state=42,
-                n_jobs=-1
+                random_state=42
             )
 
         model.fit(X_train, y_train)

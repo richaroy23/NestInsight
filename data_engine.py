@@ -237,7 +237,7 @@ def _save_geocode_entries(entries):
         print("GEOCACHE WRITE ERROR:", e)
 
 
-def _geocode_locations(location_values):
+def _geocode_locations(location_values, max_seconds=25):
     """
     Geocode a list of unique location strings.
     Returns a dict of {location_string: (lat, lon)} for successful lookups.
@@ -247,6 +247,13 @@ def _geocode_locations(location_values):
     so the same city/state/country strings looked up in past uploads don't
     hit Nominatim again — and unlike Render's free-tier disk, this cache
     survives redeploys and worker restarts.
+
+    Bounded by `max_seconds` of wall-clock time (not just a location count),
+    since a run of slow or failing Nominatim lookups can otherwise blow well
+    past that — each call carries a 5s network timeout plus a mandatory 1s
+    rate-limit pause, and the whole upload pipeline shares one Gunicorn
+    worker timeout. Once the budget is spent, whatever is already resolved
+    (cache hits + anything looked up so far) is returned as-is.
     """
     from geopy.geocoders import Nominatim
     from geopy.exc import GeocoderTimedOut, GeocoderServiceError
@@ -266,10 +273,14 @@ def _geocode_locations(location_values):
     cache = _load_geocode_cache(cleaned_keys)
     new_entries = []
     geolocator = None  # only created if we actually need a network lookup
+    start_time = time.monotonic()
 
     for key in cleaned_keys:
         if key in cache:
             continue  # already resolved, from Supabase or earlier in this loop
+
+        if time.monotonic() - start_time > max_seconds:
+            break  # time budget spent — stop hitting Nominatim, return what we have
 
         if geolocator is None:
             geolocator = Nominatim(user_agent="nestinsight_mapper")
@@ -283,9 +294,14 @@ def _geocode_locations(location_values):
                     "lat": loc.latitude,
                     "lon": loc.longitude
                 })
-            time.sleep(1)  # Nominatim usage policy: max 1 request per second
         except (GeocoderTimedOut, GeocoderServiceError):
-            continue  # Skip locations that fail — don't crash the whole map
+            pass  # Skip locations that fail — don't crash the whole map
+        finally:
+            # Always pause, success or failure — Nominatim's usage policy
+            # caps requests at 1/second, and skipping this on failures means
+            # retries fire faster than that, risking the user-agent getting
+            # throttled (which would make every remaining lookup time out too).
+            time.sleep(1)
 
     if new_entries:
         _save_geocode_entries(new_entries)
@@ -299,11 +315,14 @@ def generate_map(df, upload_id=None, location_col=None):
         unique_locations = df[location_col].dropna().unique().tolist()
 
         # Cap at 20 unique locations to keep geocoding time reasonable.
-        # Each *uncached* location costs ~1-2s (Nominatim lookup + the
-        # mandatory 1s rate-limit sleep), so this keeps a cold-cache worst
-        # case well under the Gunicorn worker timeout. Cached locations
-        # (see _geocode_locations) are essentially free, so repeat uploads
-        # with familiar place names resolve far faster than this cap implies.
+        # Each *uncached* location costs ~1-2s in the common case, but a
+        # slow or failing Nominatim response can cost up to ~6s (5s lookup
+        # timeout + 1s rate-limit sleep) — so this count cap alone isn't a
+        # hard guarantee. _geocode_locations() also enforces its own
+        # wall-clock time budget as a backstop, so a run of slow lookups
+        # can't blow past the Gunicorn worker timeout regardless of count.
+        # Cached locations are essentially free, so repeat uploads with
+        # familiar place names resolve far faster than this cap implies.
         unique_locations = unique_locations[:20]
 
         geo_cache = _geocode_locations(unique_locations)

@@ -13,7 +13,11 @@ client = None
 
 if GROQ_API_KEY:
     try:
-        client = Groq(api_key=GROQ_API_KEY)
+        # Bounded so a slow/hanging Groq response can't, on its own, eat
+        # most of the Gunicorn worker's request timeout — the rest of the
+        # /upload pipeline (geocoding, model training, report generation,
+        # Supabase uploads) still needs time after this call returns.
+        client = Groq(api_key=GROQ_API_KEY, timeout=20.0)
     except Exception:
         client = None
 

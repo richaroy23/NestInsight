@@ -1,8 +1,35 @@
 import os
+import re
+import xml.sax.saxutils as saxutils
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet
 from docx import Document
 from datetime import datetime
+
+
+def _pdf_text(value):
+    """
+    Make a value safe to drop into a ReportLab Paragraph.
+
+    Paragraph() doesn't render plain text — it parses a small, strict
+    markup language and raises ValueError on anything outside it (a bare
+    '<', an unescaped '&', a non-self-closing tag like '<br>' instead of
+    '<br/>', etc). The Groq-generated AI insights routinely contain
+    markdown (**bold**, '<br>' line breaks) that trips this up and crashes
+    PDF generation entirely.
+
+    This escapes everything as XML first (so nothing in the source text
+    can be misread as a tag), then re-introduces just the handful of tags
+    ReportLab actually supports.
+    """
+    if value is None:
+        return ""
+
+    text = saxutils.escape(str(value))
+    text = re.sub(r"&lt;br\s*/?&gt;", "<br/>", text, flags=re.IGNORECASE)
+    text = text.replace("\n", "<br/>")
+    text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)
+    return text
 
 
 def _get_model_metric(model_result):
@@ -26,23 +53,23 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insight
     #Summary
     elements.append(Paragraph("Dataset Summary:", styles['Heading2']))
     for key, value in summary.items():
-        elements.append(Paragraph(f"{key}: {value}", styles['BodyText']))
+        elements.append(Paragraph(f"{_pdf_text(key)}: {_pdf_text(value)}", styles['BodyText']))
     elements.append(Spacer(1, 20))
 
     #Statistics
     elements.append(Paragraph("Statistical Analysis:", styles['Heading2']))
     for column, value in stats.items():
-        elements.append(Paragraph(f"<b>{column}</b>", styles['BodyText']))
-        elements.append(Paragraph(str(value), styles['BodyText'])) 
+        elements.append(Paragraph(f"<b>{_pdf_text(column)}</b>", styles['BodyText']))
+        elements.append(Paragraph(_pdf_text(value), styles['BodyText']))
     elements.append(Spacer(1, 10))
 
     #Insights
     elements.append(Paragraph("Business Insights:", styles['Heading2']))
     for insight in insights:
-        elements.append(Paragraph(insight, styles['BodyText']))
+        elements.append(Paragraph(_pdf_text(insight), styles['BodyText']))
     elements.append(Spacer(1, 20))
     elements.append(Paragraph("AI Business Intelligence:", styles['Heading2']))
-    elements.append(Paragraph(ai_insights, styles['BodyText']))
+    elements.append(Paragraph(_pdf_text(ai_insights), styles['BodyText']))
 
     #Model Results
     elements.append(Paragraph("Model Results:", styles['Heading2']))
@@ -50,10 +77,10 @@ def generate_pdf(summary, stats, insights, model_result, chart_paths, ai_insight
     if model_result.get("status") == "success":
         metric_name, metric_value = _get_model_metric(model_result)
         suffix = "%" if metric_name == "Accuracy" else ""
-        elements.append(Paragraph(f"{metric_name}: {metric_value}{suffix}", styles['BodyText']))
-        elements.append(Paragraph(f"Model Path: {model_result['model_path']}", styles['BodyText']))
+        elements.append(Paragraph(_pdf_text(f"{metric_name}: {metric_value}{suffix}"), styles['BodyText']))
+        elements.append(Paragraph(_pdf_text(f"Model Path: {model_result['model_path']}"), styles['BodyText']))
     else:
-        elements.append(Paragraph(f"Training Failed: {model_result['message']}", styles['BodyText']))
+        elements.append(Paragraph(_pdf_text(f"Training Failed: {model_result['message']}"), styles['BodyText']))
 
     elements.append(Spacer(1, 20))
 

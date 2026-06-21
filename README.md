@@ -404,6 +404,12 @@ create table reports (
 
 ---
 
+### Live Demo Note
+
+The app is hosted on Render's free tier, which spins down after inactivity. If the live demo takes 30–50 seconds to load on first visit, that is normal cold-start behaviour — the app is waking up. Subsequent requests within the same session will be fast.
+
+---
+
 ## Deployment Notes
 
 NestInsight is deployed using Render and Supabase. Before deployment, make sure the following setup is completed.

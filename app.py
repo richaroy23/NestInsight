@@ -17,7 +17,7 @@ except Exception:
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv("SECRET_KEY")
+_secret_key = os.getenv("SECRET_KEY")
 if not _secret_key:
     import warnings
     warnings.warn(

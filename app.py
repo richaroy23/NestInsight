@@ -169,7 +169,8 @@ def upload():
     forecast_chart = forecast_sales(df, upload_id, date_col=date_column, sales_col=value_column)
     if forecast_chart:
         chart_paths["forecast"] = forecast_chart
-    map_file = generate_map(df, upload_id)
+    location_column = request.form.get("location_column") or None
+    map_file = generate_map(df, upload_id, location_col=location_column)
     target_column = request.form.get("target_column")
     insight_columns = request.form.getlist("insight_columns")
     date_column = request.form.get("date_column") or None

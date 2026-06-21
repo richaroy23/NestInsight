@@ -354,14 +354,6 @@ def _is_classification_target(y):
 def _prepare_features(X):
     X = X.copy()
 
-    # Drop obvious useless columns manually
-    drop_cols = [
-        "Transaction ID",
-        "Customer ID",
-    ]
-
-    X = X.drop(columns=drop_cols, errors="ignore")
-
     # Convert datetime columns into numeric timestamps
     for col in X.columns:
         if "date" in col.lower():

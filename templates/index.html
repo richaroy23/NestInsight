@@ -31,9 +31,25 @@
                 </div>
 
                 <div class="upload-box">
-                    <label for="target_column">Target column</label>
+                    <label for="target_column">Target column <small>(for ML model)</small></label>
                     <select id="target_column" name="target_column" required disabled>
                         <option value="">Upload CSV first</option>
+                    </select>
+                </div>
+
+                <div class="upload-box" id="insight_box" style="display:none;">
+                    <label for="insight_columns">Insight columns <small>(pick up to 2 numeric columns to highlight)</small></label>
+                    <select id="insight_columns" name="insight_columns" multiple disabled>
+                    </select>
+                </div>
+
+                <div class="upload-box" id="forecast_box" style="display:none;">
+                    <label>Sales forecast <small>(optional — select date and value columns)</small></label>
+                    <select id="date_column" name="date_column" disabled>
+                        <option value="">No forecast</option>
+                    </select>
+                    <select id="value_column" name="value_column" disabled style="margin-top:8px;">
+                        <option value="">No forecast</option>
                     </select>
                 </div>
 
@@ -47,6 +63,20 @@
 <script>
 const fileInput = document.getElementById('file');
 const targetSelect = document.getElementById('target_column');
+const insightSelect = document.getElementById('insight_columns');
+const dateSelect = document.getElementById('date_column');
+const valueSelect = document.getElementById('value_column');
+
+function populateSelect(selectEl, columns, defaultLabel) {
+    selectEl.innerHTML = `<option value="">${defaultLabel}</option>`;
+    columns.forEach(col => {
+        const opt = document.createElement('option');
+        opt.value = col;
+        opt.textContent = col;
+        selectEl.appendChild(opt);
+    });
+    selectEl.disabled = false;
+}
 
 fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
@@ -56,18 +86,26 @@ fileInput.addEventListener('change', () => {
     reader.onload = (event) => {
         const text = event.target.result;
         const firstLine = text.split(/\r?\n/)[0];
-        const columns = firstLine.split(',');
+        const columns = firstLine.split(',').map(c => c.trim()).filter(Boolean);
 
-        targetSelect.innerHTML = '<option value="">Select Target</option>';
+        // Target column
+        populateSelect(targetSelect, columns, 'Select Target');
 
-        columns.forEach((col) => {
-            const option = document.createElement('option');
-            option.value = col.trim();
-            option.textContent = col.trim();
-            targetSelect.appendChild(option);
+        // Insight columns (multi-select — show all columns, user picks)
+        insightSelect.innerHTML = '';
+        columns.forEach(col => {
+            const opt = document.createElement('option');
+            opt.value = col;
+            opt.textContent = col;
+            insightSelect.appendChild(opt);
         });
+        insightSelect.disabled = false;
+        document.getElementById('insight_box').style.display = '';
 
-        targetSelect.disabled = false;
+        // Forecast columns
+        populateSelect(dateSelect, columns, 'No forecast (skip)');
+        populateSelect(valueSelect, columns, 'No forecast (skip)');
+        document.getElementById('forecast_box').style.display = '';
     };
 
     reader.readAsText(file);

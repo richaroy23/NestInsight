@@ -346,6 +346,7 @@ button:active {
     transform: translateY(0);
 }
 
+.actions,
 .form-actions {
     display: flex;
     gap: 12px;

@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 
 from flask import Flask, render_template, request, send_file, session, redirect
 from markupsafe import Markup
@@ -189,25 +190,46 @@ def upload():
     if map_file:
         session["last_map_file"] = map_file
 
-    #Render dashboard 
-    return render_template(
-        "dashboard.html",
-        summary=summary,
-        stats=stats,
-        cleaning_report=cleaning_report,
-        model_result=model_result,
-        basic_insights=basic_insights,
-        chart_paths=chart_paths,
-        cleaned_path=cleaned_path,
-        pdf_path=pdf_path,
-        docx_path=docx_path,
-        ai_insights=ai_insights,
-        ai_insights_html=ai_insights_html,
-        cleaned_url=cleaned_url,
-        pdf_url=pdf_url,
-        docx_url=docx_url,
-        map_file=map_file
-    )
+    # Persist the analysis context so the results page survives a refresh or
+    # a direct URL visit (GET /results/<upload_id>).
+    context = {
+        "summary": summary,
+        "stats": stats,
+        "cleaning_report": cleaning_report,
+        "model_result": model_result,
+        "basic_insights": basic_insights,
+        "chart_paths": chart_paths,
+        "cleaned_path": cleaned_path,
+        "pdf_path": pdf_path,
+        "docx_path": docx_path,
+        "ai_insights": ai_insights,
+        "cleaned_url": cleaned_url,
+        "pdf_url": pdf_url,
+        "docx_url": docx_url,
+        "map_file": map_file,
+    }
+    context_path = os.path.join("outputs", f"{upload_id}_context.json")
+    with open(context_path, "w") as f:
+        json.dump(context, f)
+
+    return redirect(f"/results/{upload_id}")
+
+#Results page — stable GET route so refresh / back / shared URLs all work
+@app.route("/results/<upload_id>")
+def results(upload_id):
+    if "user_id" not in session:
+        return redirect("/")
+
+    context_path = os.path.join("outputs", f"{upload_id}_context.json")
+    if not os.path.exists(context_path):
+        return redirect("/dashboard")
+
+    with open(context_path) as f:
+        ctx = json.load(f)
+
+    ctx["ai_insights_html"] = render_markdown_text(ctx.get("ai_insights", ""))
+
+    return render_template("dashboard.html", **ctx)
 
 #History page
 @app.route("/history")
